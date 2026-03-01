@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd.exe /c \"dir /A C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND 2>&1\")",
+      "Bash(cmd.exe /c \"cd /d C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND && dir /A /S 2>&1\")",
+      "Bash(cmd.exe /c \"powershell -Command \"\"Get-ChildItem -Path ''C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND'' -Recurse -Force | Select-Object FullName, Attributes | Format-Table -AutoSize\"\"\")",
+      "Bash(powershell -Command \"Get-ChildItem -Path ''C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND'' -Recurse -Force | Select-Object FullName, Attributes | Format-Table -AutoSize\")",
+      "Bash(cmd.exe /c \"dir /s /b \"\"C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND\"\" 2>&1\")",
+      "Bash(cmd.exe /c \"dir /s /b C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND\")",
+      "Bash(cmd.exe /c \"dir C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND /s /b 2>&1 | head -50\")",
+      "Bash(cmd.exe /c \"dir C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND'' -Recurse -File | Select-Object -ExpandProperty FullName\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem -Path ''C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND'' -Recurse -File | Select-Object FullName | Format-List\")",
+      "Bash(copy:*)",
+      "Bash(cmd /c copy:*)",
+      "Bash(cmd /c dir \"C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND\\\\assets\\\\logo.png\")",
+      "Bash(dir:*)",
+      "Bash(cmd /c \"dir \"C:UsersHUAWEIDesktopXOUUNDassetslogo.png\" 2>&1 & echo --- & dir \"C:UsersHUAWEIDesktopXOUUNDappsrcmainresdrawablelogo.png\" 2>&1\")",
+      "Bash(cmd /c \"if exist \"C:UsersHUAWEIDesktopXOUUNDassetslogo.png\" \\(echo SOURCE EXISTS\\) else \\(echo SOURCE NOT FOUND\\)\")",
+      "Bash(cmd /c \"dir assets\")",
+      "Bash(cmd /c \"dir C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND\\\\assets 2>&1\")",
+      "Bash(cmd /c dir C:UsersHUAWEIDesktopXOUUNDassets)",
+      "Bash(echo:*)",
+      "Bash(cmd /c dir \"C:\\\\Users\\\\HUAWEI\\\\Desktop\\\\XOUUND\")",
+      "Bash(cd:*)"
+    ]
+  }
+}
