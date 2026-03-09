@@ -1,6 +1,7 @@
 package com.example.xound.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -17,13 +18,21 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.xound.data.local.SessionManager
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
+
 
 private val XoundCream = Color(0xFFF5F0E8)
 
 @Composable
-fun HomeScreen(onLogout: () -> Unit = {}) {
+fun HomeScreen(
+    onLogout: () -> Unit = {},
+    onNavigateToEvents: () -> Unit = {},
+    onNavigateToLibrary: () -> Unit = {}
+) {
+    val userName = SessionManager.getUserName().ifBlank { "Usuario" }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -56,7 +65,7 @@ fun HomeScreen(onLogout: () -> Unit = {}) {
             color = Color.Black
         )
         Text(
-            text = "Josseph Peralta",
+            text = userName,
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = XoundYellow
@@ -69,9 +78,9 @@ fun HomeScreen(onLogout: () -> Unit = {}) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            StatCard("24", "Canciones", Modifier.weight(1f))
-            StatCard("6", "Tonalidades", Modifier.weight(1f))
-            StatCard("3", "Eventos", Modifier.weight(1f))
+            StatCard("0", "Canciones", Modifier.weight(1f))
+            StatCard("0", "Tonalidades", Modifier.weight(1f))
+            StatCard("0", "Eventos", Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -95,7 +104,8 @@ fun HomeScreen(onLogout: () -> Unit = {}) {
                 icon = Icons.Default.Event,
                 backgroundColor = XoundNavy,
                 contentColor = Color.White,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToEvents
             )
         }
 
@@ -108,11 +118,12 @@ fun HomeScreen(onLogout: () -> Unit = {}) {
         ) {
             ActionCard(
                 title = "Biblioteca",
-                subtitle = "24 canciones",
+                subtitle = "Mis canciones",
                 icon = Icons.Default.LibraryMusic,
                 backgroundColor = XoundNavy,
                 contentColor = Color.White,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToLibrary
             )
             ActionCard(
                 title = "Agregar",
@@ -137,33 +148,33 @@ fun HomeScreen(onLogout: () -> Unit = {}) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        RecentSongItem(
-            title = "Concierto 1",
-            keyLabel = "La Mayor",
-            keyColor = Color(0xFFE8934A),
-            duration = "2:35",
-            iconColor = Color(0xFFE05A5A)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        RecentSongItem(
-            title = "Concierto 2",
-            keyLabel = "Fa Mayor",
-            keyColor = Color(0xFF4CAF50),
-            duration = "2:35",
-            iconColor = Color(0xFF4CAF50)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        RecentSongItem(
-            title = "Concierto 3",
-            keyLabel = "Mi Menor",
-            keyColor = Color(0xFF3A4B7A),
-            duration = "2:38",
-            iconColor = Color(0xFF3A4B7A)
-        )
+        // Placeholder cuando no hay canciones
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = XoundNavy)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MusicNote,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.5f),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Agrega tu primera canción",
+                    fontSize = 13.sp,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+            }
+        }
     }
 }
 
@@ -199,10 +210,11 @@ private fun ActionCard(
     icon: ImageVector,
     backgroundColor: Color,
     contentColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = modifier.height(100.dp),
+        modifier = modifier.height(100.dp).clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
@@ -229,92 +241,6 @@ private fun ActionCard(
                     text = subtitle,
                     fontSize = 11.sp,
                     color = contentColor.copy(alpha = 0.8f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecentSongItem(
-    title: String,
-    keyLabel: String,
-    keyColor: Color,
-    duration: String,
-    iconColor: Color
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = XoundNavy)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Ícono circular de instrumento
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(iconColor, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MusicNote,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Título, tonalidad y duración
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .background(keyColor, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = keyLabel,
-                            fontSize = 10.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Text(
-                        text = duration,
-                        fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.7f)
-                    )
-                }
-            }
-
-            // Botón de reproducción
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(XoundYellow, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Reproducir",
-                    tint = XoundNavy,
-                    modifier = Modifier.size(20.dp)
                 )
             }
         }

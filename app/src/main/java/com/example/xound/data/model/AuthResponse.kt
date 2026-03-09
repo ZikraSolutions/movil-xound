@@ -6,8 +6,14 @@ data class AuthResponse(
     @SerializedName("token")       val token: String? = null,
     @SerializedName("accessToken") val accessToken: String? = null,
     @SerializedName("message")     val message: String? = null,
-    @SerializedName("email")       val email: String? = null
+    @SerializedName("user")        val user: UserResponse? = null
 ) {
-    // Devuelve el token independientemente del nombre de campo que use el backend
     fun resolveToken(): String = token ?: accessToken ?: ""
 }
+
+data class UserResponse(
+    @SerializedName("id")       val id: Long? = null,
+    @SerializedName("name")     val name: String? = null,
+    @SerializedName("email")    val email: String? = null,
+    @SerializedName("roleName") val roleName: String? = null
+)
