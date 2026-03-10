@@ -35,6 +35,7 @@ class MainActivity : ComponentActivity() {
                 var showAddToSetlist by remember { mutableStateOf(false) }
                 var eventDetailOrigin by remember { mutableStateOf("events") }
                 var viewSongOrigin by remember { mutableStateOf("library") }
+                var viewSongEventName by remember { mutableStateOf<String?>(null) }
 
                 // Back handlers
                 BackHandler(enabled = currentScreen == "register") {
@@ -137,6 +138,7 @@ class MainActivity : ComponentActivity() {
                             onViewSong = { song ->
                                 songToView = song
                                 viewSongOrigin = "eventDetail"
+                                viewSongEventName = event.title
                                 currentScreen = "viewSong"
                             },
                             eventViewModel = eventViewModel
@@ -162,6 +164,7 @@ class MainActivity : ComponentActivity() {
                         onViewSong = { song ->
                             songToView = song
                             viewSongOrigin = "library"
+                            viewSongEventName = null
                             currentScreen = "viewSong"
                         },
                         songViewModel = songViewModel
@@ -172,6 +175,7 @@ class MainActivity : ComponentActivity() {
                     "viewSong" -> songToView?.let { song ->
                         ViewSongScreen(
                             song = song,
+                            eventName = viewSongEventName,
                             onBack = {
                                 currentScreen = viewSongOrigin
                                 songToView = null

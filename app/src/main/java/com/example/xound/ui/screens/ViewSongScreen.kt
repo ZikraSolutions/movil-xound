@@ -27,6 +27,7 @@ private val ChordColor = Color(0xFFE5A100)
 @Composable
 fun ViewSongScreen(
     song: SongResponse,
+    eventName: String? = null,
     onBack: () -> Unit = {}
 ) {
     Column(
@@ -47,6 +48,17 @@ fun ViewSongScreen(
                 contentDescription = "Volver",
                 tint = XoundNavy
             )
+        }
+
+        // Event name if coming from an event
+        if (!eventName.isNullOrBlank()) {
+            Text(
+                text = eventName,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF888888)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
         }
 
         // Title
