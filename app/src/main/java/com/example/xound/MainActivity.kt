@@ -36,6 +36,7 @@ class MainActivity : ComponentActivity() {
                 var eventDetailOrigin by remember { mutableStateOf("events") }
                 var viewSongOrigin by remember { mutableStateOf("library") }
                 var viewSongEventName by remember { mutableStateOf<String?>(null) }
+                var liveEvent by remember { mutableStateOf<EventResponse?>(null) }
 
                 // Back handlers
                 BackHandler(enabled = currentScreen == "register") {
@@ -62,6 +63,12 @@ class MainActivity : ComponentActivity() {
                 BackHandler(enabled = currentScreen == "editEvent") {
                     currentScreen = "events"
                 }
+                BackHandler(enabled = currentScreen == "selectEventLive") {
+                    currentScreen = "home"
+                }
+                BackHandler(enabled = currentScreen == "liveMode") {
+                    currentScreen = "selectEventLive"
+                }
 
                 when (currentScreen) {
                     "login" -> LoginScreen(
@@ -82,6 +89,7 @@ class MainActivity : ComponentActivity() {
                         onNavigateToEvents = { currentScreen = "events" },
                         onNavigateToLibrary = { currentScreen = "library" },
                         onNavigateToAddSong = { currentScreen = "addSong" },
+                        onNavigateToLiveMode = { currentScreen = "selectEventLive" },
                         onEventClick = { event ->
                             selectedEvent = event
                             eventDetailOrigin = "home"
@@ -189,6 +197,24 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = "library"
                                 songToEdit = null
                             }
+                        )
+                    }
+                    "selectEventLive" -> SelectEventScreen(
+                        onBack = { currentScreen = "home" },
+                        onSelectEvent = { event ->
+                            liveEvent = event
+                            currentScreen = "liveMode"
+                        },
+                        eventViewModel = eventViewModel
+                    )
+                    "liveMode" -> liveEvent?.let { event ->
+                        LiveModeScreen(
+                            event = event,
+                            onBack = {
+                                currentScreen = "selectEventLive"
+                                liveEvent = null
+                            },
+                            eventViewModel = eventViewModel
                         )
                     }
                 }

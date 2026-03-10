@@ -39,6 +39,7 @@ fun HomeScreen(
     onNavigateToEvents: () -> Unit = {},
     onNavigateToLibrary: () -> Unit = {},
     onNavigateToAddSong: () -> Unit = {},
+    onNavigateToLiveMode: () -> Unit = {},
     onEventClick: (EventResponse) -> Unit = {},
     eventViewModel: EventViewModel = viewModel(),
     songViewModel: SongViewModel = viewModel()
@@ -122,7 +123,8 @@ fun HomeScreen(
                 icon = Icons.Default.MusicNote,
                 backgroundColor = XoundYellow,
                 contentColor = XoundNavy,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToLiveMode
             )
             ActionCard(
                 title = "Eventos",
