@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
 import com.example.xound.ui.viewmodel.CreateEventState
@@ -29,14 +30,13 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val XoundCream = Color(0xFFF5F0E8)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateEventScreen(
     onBack: () -> Unit = {},
     eventViewModel: EventViewModel = viewModel()
 ) {
+    val colors = LocalXoundColors.current
     var title by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -56,7 +56,7 @@ fun CreateEventScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(top = 48.dp, bottom = 24.dp)
@@ -69,7 +69,7 @@ fun CreateEventScreen(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Volver",
-                tint = XoundNavy
+                tint = colors.textPrimary
             )
         }
 
@@ -84,27 +84,34 @@ fun CreateEventScreen(
         Spacer(modifier = Modifier.height(28.dp))
 
         // Form fields
-        FormLabel("Nombre del evento")
+        Text(text = "Nombre del evento", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = title,
             onValueChange = { title = it },
-            placeholder = { Text("Nombre del evento", color = Color(0xFF999999)) },
+            placeholder = { Text("Nombre del evento", color = colors.textHint) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             enabled = !isLoading && !isSuccess,
-            colors = formFieldColors()
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = colors.inputBorder,
+                focusedBorderColor = XoundNavy,
+                unfocusedContainerColor = colors.inputBackground,
+                focusedContainerColor = colors.inputBackground,
+                unfocusedTextColor = colors.textPrimary,
+                focusedTextColor = colors.textPrimary
+            )
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        FormLabel("Fecha del evento")
+        Text(text = "Fecha del evento", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = selectedDate?.format(dateFormatter) ?: "",
             onValueChange = {},
-            placeholder = { Text("dd/mm/aaaa", color = Color(0xFF999999)) },
+            placeholder = { Text("dd/mm/aaaa", color = colors.textHint) },
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(enabled = !isLoading && !isSuccess) { showDatePicker = true },
@@ -121,10 +128,10 @@ fun CreateEventScreen(
                 )
             },
             colors = OutlinedTextFieldDefaults.colors(
-                disabledBorderColor = Color(0xFFE5E5E5),
-                disabledContainerColor = Color.White,
-                disabledTextColor = Color.Black,
-                disabledPlaceholderColor = Color(0xFF999999),
+                disabledBorderColor = colors.inputBorder,
+                disabledContainerColor = colors.inputBackground,
+                disabledTextColor = colors.textPrimary,
+                disabledPlaceholderColor = colors.textHint,
                 disabledTrailingIconColor = XoundNavy
             )
         )
@@ -157,17 +164,24 @@ fun CreateEventScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        FormLabel("Lugar del evento")
+        Text(text = "Lugar del evento", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = venue,
             onValueChange = { venue = it },
-            placeholder = { Text("Lugar del evento", color = Color(0xFF999999)) },
+            placeholder = { Text("Lugar del evento", color = colors.textHint) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             enabled = !isLoading && !isSuccess,
-            colors = formFieldColors()
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = colors.inputBorder,
+                focusedBorderColor = XoundNavy,
+                unfocusedContainerColor = colors.inputBackground,
+                focusedContainerColor = colors.inputBackground,
+                unfocusedTextColor = colors.textPrimary,
+                focusedTextColor = colors.textPrimary
+            )
         )
 
         Spacer(modifier = Modifier.height(28.dp))
@@ -206,14 +220,14 @@ fun CreateEventScreen(
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = Color(0xFF4CAF50),
+                    tint = colors.successColor,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Evento creado exitosamente",
                     fontSize = 14.sp,
-                    color = Color(0xFF333333)
+                    color = colors.textPrimary
                 )
             }
 
@@ -224,7 +238,7 @@ fun CreateEventScreen(
         if (createState is CreateEventState.Error) {
             Text(
                 text = (createState as CreateEventState.Error).message,
-                color = Color.Red,
+                color = colors.errorColor,
                 fontSize = 12.sp
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -243,19 +257,19 @@ fun CreateEventScreen(
                 .fillMaxWidth()
                 .height(52.dp),
             enabled = !isLoading && !isSuccess,
-            colors = ButtonDefaults.buttonColors(containerColor = XoundNavy),
+            colors = ButtonDefaults.buttonColors(containerColor = XoundYellow),
             shape = RoundedCornerShape(16.dp)
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = XoundNavy,
                     strokeWidth = 2.dp,
                     modifier = Modifier.size(22.dp)
                 )
             } else {
                 Text(
                     text = "Guardar nuevo evento",
-                    color = Color.White,
+                    color = XoundNavy,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
@@ -263,21 +277,3 @@ fun CreateEventScreen(
         }
     }
 }
-
-@Composable
-private fun FormLabel(text: String) {
-    Text(
-        text = text,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
-        color = Color.Black
-    )
-}
-
-@Composable
-private fun formFieldColors() = OutlinedTextFieldDefaults.colors(
-    unfocusedBorderColor = Color(0xFFE5E5E5),
-    focusedBorderColor = XoundNavy,
-    unfocusedContainerColor = Color.White,
-    focusedContainerColor = Color.White
-)

@@ -11,6 +11,7 @@ import com.example.xound.data.local.SessionManager
 import com.example.xound.data.model.EventResponse
 import com.example.xound.data.model.SongResponse
 import com.example.xound.ui.screens.*
+import com.example.xound.ui.theme.ThemeState
 import com.example.xound.ui.theme.XOUNDTheme
 import com.example.xound.ui.viewmodel.AuthViewModel
 import com.example.xound.ui.viewmodel.EventViewModel
@@ -20,6 +21,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         SessionManager.init(applicationContext)
+        ThemeState.init()
         enableEdgeToEdge()
         setContent {
             XOUNDTheme {

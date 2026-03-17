@@ -10,6 +10,9 @@ object SessionManager {
     private const val KEY_USER_NAME = "user_name"
     private const val KEY_USER_EMAIL = "user_email"
     private const val KEY_USER_ID = "user_id"
+    private const val KEY_DARK_MODE = "dark_mode"
+    // "system" = follow system, "on" = always dark, "off" = always light
+    private const val KEY_DARK_MODE_OPTION = "dark_mode_option"
 
     private lateinit var prefs: SharedPreferences
 
@@ -36,7 +39,16 @@ object SessionManager {
 
     fun isLoggedIn(): Boolean = !getToken().isNullOrBlank()
 
+    fun getDarkModeOption(): String = prefs.getString(KEY_DARK_MODE_OPTION, "system") ?: "system"
+
+    fun setDarkModeOption(option: String) {
+        prefs.edit().putString(KEY_DARK_MODE_OPTION, option).apply()
+    }
+
     fun clearSession() {
+        val darkOption = getDarkModeOption()
         prefs.edit().clear().apply()
+        // Preserve dark mode preference across logout
+        setDarkModeOption(darkOption)
     }
 }

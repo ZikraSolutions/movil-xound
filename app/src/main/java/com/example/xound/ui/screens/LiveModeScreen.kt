@@ -3,6 +3,7 @@ package com.example.xound.ui.screens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -21,12 +22,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.xound.data.model.EventResponse
 import com.example.xound.data.model.SongResponse
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
 import com.example.xound.ui.viewmodel.EventViewModel
 import kotlinx.coroutines.delay
 
-private val XoundCream = Color(0xFFF5F0E8)
 private val LiveChordColor = Color(0xFFE5A100)
 
 @Composable
@@ -35,12 +36,15 @@ fun LiveModeScreen(
     onBack: () -> Unit = {},
     eventViewModel: EventViewModel
 ) {
+    val colors = LocalXoundColors.current
     val setlistSongs by eventViewModel.setlistSongs.collectAsState()
     val setlistLoading by eventViewModel.setlistLoading.collectAsState()
 
     var currentIndex by remember { mutableIntStateOf(0) }
     var isPlaying by remember { mutableStateOf(true) }
     var highlightLine by remember { mutableIntStateOf(-1) }
+    // Track a seek trigger: when user taps a line, we set this to force the effect to restart from that line
+    var seekToLine by remember { mutableIntStateOf(-1) }
 
     val scrollState = rememberScrollState()
 
@@ -55,7 +59,6 @@ fun LiveModeScreen(
     val currentSong = currentSetlistItem?.song
 
     // Calculate ms per lyric line based on BPM and time signature
-    // ~2 bars per lyric line; secondsPerBar = (beatsPerBar * 60) / BPM
     fun calcMsPerLine(song: SongResponse): Long {
         val bpm = song.bpm ?: return 2000L
         if (bpm <= 0) return 2000L
@@ -68,7 +71,7 @@ fun LiveModeScreen(
         return (secondsPerBar * barsPerLine * 1000).toLong().coerceIn(800L, 6000L)
     }
 
-    // Count displayable lyric lines (non-blank, non-section-header, non-chord-only)
+    // Count displayable lyric lines
     fun countLyricLines(text: String): Int {
         val lines = text.split("\n")
         var count = 0
@@ -79,60 +82,74 @@ fun LiveModeScreen(
             if (isLiveChordLine(trimmed)) {
                 val next = if (i + 1 < lines.size) lines[i + 1].trim() else ""
                 if (next.isNotBlank() && !isLiveChordLine(next) && !isLiveSectionHeader(next)) {
-                    count++ // chord+lyric pair counts as 1 lyric line
-                    i += 2
-                } else {
-                    i++ // chord-only line, skip
-                }
+                    count++; i += 2
+                } else { i++ }
             } else if (trimmed.isBlank()) { i++ }
             else { count++; i++ }
         }
         return count
     }
 
-    // Auto-scroll + highlight when playing
-    LaunchedEffect(isPlaying, currentSong) {
-        if (isPlaying && currentSong != null) {
+    // Auto-scroll + highlight - uses seekToLine to know where to resume from
+    // Key only on currentSong and seekToLine so pause/resume doesn't restart
+    LaunchedEffect(currentSong, seekToLine) {
+        if (currentSong != null) {
             val lyricsText = currentSong.lyrics ?: currentSong.content ?: ""
             if (lyricsText.isNotBlank()) {
                 val msPerLine = calcMsPerLine(currentSong)
                 val totalLyricLines = countLyricLines(lyricsText)
-                val totalDurationMs = totalLyricLines * msPerLine
                 val scrollMax = scrollState.maxValue
-                if (scrollMax > 0 && totalDurationMs > 0) {
+
+                // Start from the current highlight position (resume)
+                val startLine = if (seekToLine >= 0) seekToLine else (highlightLine + 1).coerceAtLeast(0)
+
+                // Scroll to proportional position when seeking
+                if (seekToLine >= 0 && scrollMax > 0 && totalLyricLines > 0) {
+                    val targetScroll = (scrollMax.toFloat() * seekToLine / totalLyricLines).toInt()
+                    scrollState.scrollTo(targetScroll.coerceIn(0, scrollMax))
+                    highlightLine = seekToLine
+                    seekToLine = -1 // consumed
+                }
+
+                if (scrollMax > 0 && totalLyricLines > 0) {
                     val stepDelay = 50L
-                    val totalSteps = totalDurationMs / stepDelay
-                    val scrollPerStep = scrollMax.toFloat() / totalSteps.toFloat()
-                    val stepsPerLine = if (totalLyricLines > 0) totalSteps / totalLyricLines else totalSteps
-                    var accumulated = 0f
-                    var stepCount = 0L
+                    val stepsPerLine = msPerLine / stepDelay
+                    val scrollPerLine = scrollMax.toFloat() / totalLyricLines
+                    val scrollPerStep = scrollPerLine / stepsPerLine
 
-                    while (isPlaying && scrollState.value < scrollMax) {
-                        delay(stepDelay)
-                        stepCount++
-                        // Update highlight line
-                        val newLine = if (stepsPerLine > 0) (stepCount / stepsPerLine).toInt() else 0
-                        if (newLine != highlightLine) highlightLine = newLine
+                    for (line in startLine until totalLyricLines) {
+                        // Wait for play state
+                        while (!isPlaying) { delay(100) }
 
-                        accumulated += scrollPerStep
-                        if (accumulated >= 1f) {
-                            val pixels = accumulated.toInt()
-                            accumulated -= pixels
-                            scrollState.scrollTo(scrollState.value + pixels)
+                        highlightLine = line
+                        // Scroll smoothly for this line's duration
+                        var accumulated = 0f
+                        for (step in 0 until stepsPerLine) {
+                            if (!isPlaying) break
+                            // Check if user seeked while we were scrolling
+                            if (seekToLine >= 0) return@LaunchedEffect
+                            delay(stepDelay)
+                            accumulated += scrollPerStep
+                            if (accumulated >= 1f) {
+                                val pixels = accumulated.toInt()
+                                accumulated -= pixels
+                                val target = (scrollState.value + pixels).coerceAtMost(scrollMax)
+                                scrollState.scrollTo(target)
+                            }
                         }
                     }
 
-                    // Highlight last line
+                    // Finished all lines
                     highlightLine = totalLyricLines
 
-                    // When auto-scroll finishes, go to next song
-                    if (isPlaying && scrollState.value >= scrollMax - 5) {
-                        delay(1000) // brief pause before next song
-                        if (currentIndex < setlistSongs.size - 1) {
-                            currentIndex++
-                        } else {
-                            isPlaying = false
-                        }
+                    // Wait for play state before advancing
+                    while (!isPlaying) { delay(100) }
+
+                    delay(1000)
+                    if (currentIndex < setlistSongs.size - 1) {
+                        currentIndex++
+                    } else {
+                        isPlaying = false
                     }
                 }
             }
@@ -143,12 +160,13 @@ fun LiveModeScreen(
     LaunchedEffect(currentIndex) {
         scrollState.scrollTo(0)
         highlightLine = -1
+        seekToLine = -1
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
     ) {
         // Scrollable content
         Column(
@@ -166,7 +184,7 @@ fun LiveModeScreen(
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Volver",
-                    tint = XoundNavy
+                    tint = colors.textPrimary
                 )
             }
 
@@ -205,7 +223,7 @@ fun LiveModeScreen(
                         text = currentSong.title,
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black,
+                        color = colors.textPrimary,
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -243,7 +261,7 @@ fun LiveModeScreen(
                     Text(
                         text = subtitle,
                         fontSize = 14.sp,
-                        color = Color(0xFF666666)
+                        color = colors.textSecondary
                     )
                 }
 
@@ -265,12 +283,16 @@ fun LiveModeScreen(
                 // Lyrics with chords
                 val lyricsText = currentSong.lyrics ?: currentSong.content ?: ""
                 if (lyricsText.isNotBlank()) {
-                    LiveLyricsWithChords(lyricsText, highlightLine)
+                    LiveLyricsWithChords(
+                        text = lyricsText,
+                        highlightLine = highlightLine,
+                        onLineClick = { lineIndex -> seekToLine = lineIndex }
+                    )
                 } else {
                     Text(
                         text = "No hay letra disponible",
                         fontSize = 14.sp,
-                        color = Color(0xFF888888)
+                        color = colors.textSecondary
                     )
                 }
 
@@ -286,7 +308,7 @@ fun LiveModeScreen(
                     Text(
                         text = if (setlistSongs.isEmpty()) "No hay canciones en el setlist"
                                else "No se pudieron cargar las canciones",
-                        color = Color(0xFF888888),
+                        color = colors.textSecondary,
                         fontSize = 14.sp
                     )
                 }
@@ -297,7 +319,7 @@ fun LiveModeScreen(
         if (currentSong != null) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = XoundCream,
+                color = colors.screenBackground,
                 shadowElevation = 8.dp
             ) {
                 // Song counter
@@ -310,7 +332,7 @@ fun LiveModeScreen(
                     Text(
                         text = "${currentIndex + 1} / ${setlistSongs.size}",
                         fontSize = 11.sp,
-                        color = Color(0xFF888888)
+                        color = colors.textSecondary
                     )
 
                     // Next song preview
@@ -327,7 +349,7 @@ fun LiveModeScreen(
                             Text(
                                 text = "Siguiente: ",
                                 fontSize = 11.sp,
-                                color = Color(0xFFAAAAAA)
+                                color = colors.textHint
                             )
                             Text(
                                 text = nextSong.title,
@@ -343,7 +365,7 @@ fun LiveModeScreen(
                         Text(
                             text = "Última canción",
                             fontSize = 11.sp,
-                            color = Color(0xFFAAAAAA)
+                            color = colors.textHint
                         )
                     }
 
@@ -358,6 +380,7 @@ fun LiveModeScreen(
                         IconButton(
                             onClick = {
                                 if (currentIndex > 0) {
+                                    seekToLine = -1
                                     highlightLine = -1
                                     currentIndex--
                                     isPlaying = true
@@ -392,6 +415,7 @@ fun LiveModeScreen(
                         IconButton(
                             onClick = {
                                 if (currentIndex < setlistSongs.size - 1) {
+                                    seekToLine = -1
                                     highlightLine = -1
                                     currentIndex++
                                     isPlaying = true
@@ -432,10 +456,11 @@ private fun LiveBadge(text: String) {
 }
 
 @Composable
-private fun LiveLyricsWithChords(text: String, highlightLine: Int) {
+private fun LiveLyricsWithChords(text: String, highlightLine: Int, onLineClick: (Int) -> Unit = {}) {
+    val colors = LocalXoundColors.current
     val lines = text.split("\n")
     var i = 0
-    var lyricLineIndex = 0 // tracks which displayable lyric line we're on
+    var lyricLineIndex = 0
 
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         while (i < lines.size) {
@@ -455,9 +480,12 @@ private fun LiveLyricsWithChords(text: String, highlightLine: Int) {
                 val nextTrimmed = nextLine.trim()
 
                 if (nextTrimmed.isNotBlank() && !isLiveChordLine(nextTrimmed) && !isLiveSectionHeader(nextTrimmed)) {
+                    val currentLyricIndex = lyricLineIndex
                     val isHighlighted = lyricLineIndex <= highlightLine
-                    val lyricColor = if (isHighlighted) XoundYellow else Color.Black
-                    Column {
+                    val lyricColor = if (isHighlighted) XoundYellow else colors.lyricsText
+                    Column(
+                        modifier = Modifier.clickable { onLineClick(currentLyricIndex) }
+                    ) {
                         Text(
                             text = line.trimEnd(),
                             fontSize = 18.sp,
@@ -477,7 +505,6 @@ private fun LiveLyricsWithChords(text: String, highlightLine: Int) {
                     lyricLineIndex++
                     i += 2
                 } else {
-                    // Chord-only line (intro chords etc) - not counted as lyric line
                     Text(
                         text = trimmed,
                         fontSize = 18.sp,
@@ -490,13 +517,15 @@ private fun LiveLyricsWithChords(text: String, highlightLine: Int) {
                 Spacer(modifier = Modifier.height(8.dp))
                 i++
             } else {
+                val currentLyricIndex = lyricLineIndex
                 val isHighlighted = lyricLineIndex <= highlightLine
                 Text(
                     text = trimmed,
                     fontSize = 15.sp,
-                    color = if (isHighlighted) XoundYellow else Color.Black,
+                    color = if (isHighlighted) XoundYellow else colors.lyricsText,
                     lineHeight = 22.sp,
-                    fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal
+                    fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
+                    modifier = Modifier.clickable { onLineClick(currentLyricIndex) }
                 )
                 lyricLineIndex++
                 i++

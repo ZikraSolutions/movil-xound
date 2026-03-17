@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.xound.data.model.EventResponse
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
 import com.example.xound.ui.viewmodel.EventViewModel
@@ -25,8 +26,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val XoundCream = Color(0xFFF5F0E8)
-
 @Composable
 fun SelectEventScreen(
     onBack: () -> Unit = {},
@@ -34,6 +33,7 @@ fun SelectEventScreen(
     onPreviewEvent: (EventResponse) -> Unit = {},
     eventViewModel: EventViewModel
 ) {
+    val colors = LocalXoundColors.current
     val events by eventViewModel.events.collectAsState()
     val isLoading by eventViewModel.isLoading.collectAsState()
 
@@ -47,7 +47,7 @@ fun SelectEventScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
             .padding(top = 48.dp)
     ) {
         Column(
@@ -60,7 +60,7 @@ fun SelectEventScreen(
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Volver",
-                    tint = XoundNavy
+                    tint = colors.textPrimary
                 )
             }
 
@@ -73,7 +73,7 @@ fun SelectEventScreen(
             Text(
                 text = "Selecciona un evento",
                 fontSize = 14.sp,
-                color = Color(0xFF888888)
+                color = colors.textSecondary
             )
         }
 
@@ -105,12 +105,12 @@ fun SelectEventScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "No hay eventos con canciones",
-                        color = Color(0xFF888888),
+                        color = colors.textSecondary,
                         fontSize = 14.sp
                     )
                     Text(
                         text = "Agrega canciones a un evento primero",
-                        color = Color(0xFFAAAAAA),
+                        color = colors.textHint,
                         fontSize = 12.sp
                     )
                 }
@@ -135,13 +135,14 @@ fun SelectEventScreen(
 
 @Composable
 private fun SelectEventCard(eventItem: EventWithSetlistCount, onClick: () -> Unit, onPreview: () -> Unit) {
+    val colors = LocalXoundColors.current
     val event = eventItem.event
     val formattedDate = formatSelectDate(event.eventDate)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = XoundNavy),
+        colors = CardDefaults.cardColors(containerColor = colors.navyCardDark),
         onClick = onClick
     ) {
         Row(

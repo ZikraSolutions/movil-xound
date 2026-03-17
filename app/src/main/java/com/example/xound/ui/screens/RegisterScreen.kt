@@ -3,6 +3,7 @@ package com.example.xound.ui.screens
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -30,9 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.xound.R
-import com.example.xound.ui.theme.XOUNDTheme
-import com.example.xound.ui.theme.XoundNavy
-import com.example.xound.ui.theme.XoundYellow
+import com.example.xound.ui.theme.*
 import com.example.xound.ui.viewmodel.AuthUiState
 import com.example.xound.ui.viewmodel.AuthViewModel
 
@@ -42,6 +41,8 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
 ) {
+    val colors = LocalXoundColors.current
+    val isDark = ThemeState.isDark(isSystemInDarkTheme())
     var name by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -60,10 +61,19 @@ fun RegisterScreen(
         }
     }
 
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        unfocusedBorderColor = colors.inputBorder,
+        focusedBorderColor = XoundNavy,
+        unfocusedContainerColor = colors.inputBackground,
+        focusedContainerColor = colors.inputBackground,
+        unfocusedTextColor = colors.textPrimary,
+        focusedTextColor = colors.textPrimary
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(if (isDark) colors.screenBackground else Color.White)
     ) {
         Box(
             modifier = Modifier
@@ -122,7 +132,7 @@ fun RegisterScreen(
                 Text(
                     text = "Crear tu cuenta",
                     fontSize = 16.sp,
-                    color = Color.Black
+                    color = colors.textPrimary
                 )
 
                 Spacer(modifier = Modifier.height(25.dp))
@@ -131,17 +141,12 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    placeholder = { Text("Nombre", color = Color(0xFF999999), fontSize = 15.sp) },
+                    placeholder = { Text("Nombre", color = colors.textHint, fontSize = 15.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(15.dp),
                     singleLine = true,
                     enabled = !isLoading,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color(0xFFE5E5E5),
-                        focusedBorderColor = XoundNavy,
-                        unfocusedContainerColor = Color(0xFFFAFAFA),
-                        focusedContainerColor = Color(0xFFFAFAFA)
-                    )
+                    colors = fieldColors
                 )
 
                 Spacer(modifier = Modifier.height(15.dp))
@@ -150,17 +155,12 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
-                    placeholder = { Text("Username", color = Color(0xFF999999), fontSize = 15.sp) },
+                    placeholder = { Text("Username", color = colors.textHint, fontSize = 15.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(15.dp),
                     singleLine = true,
                     enabled = !isLoading,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color(0xFFE5E5E5),
-                        focusedBorderColor = XoundNavy,
-                        unfocusedContainerColor = Color(0xFFFAFAFA),
-                        focusedContainerColor = Color(0xFFFAFAFA)
-                    )
+                    colors = fieldColors
                 )
 
                 Spacer(modifier = Modifier.height(15.dp))
@@ -169,7 +169,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it; passwordMismatch = false },
-                    placeholder = { Text("Contraseña", color = Color(0xFF999999), fontSize = 15.sp) },
+                    placeholder = { Text("Contraseña", color = colors.textHint, fontSize = 15.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(15.dp),
                     singleLine = true,
@@ -182,16 +182,11 @@ fun RegisterScreen(
                             Text(
                                 text = if (passwordVisible) "Ocultar" else "Ver",
                                 fontSize = 12.sp,
-                                color = XoundNavy
+                                color = if (isDark) XoundYellow else XoundNavy
                             )
                         }
                     },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color(0xFFE5E5E5),
-                        focusedBorderColor = XoundNavy,
-                        unfocusedContainerColor = Color(0xFFFAFAFA),
-                        focusedContainerColor = Color(0xFFFAFAFA)
-                    )
+                    colors = fieldColors
                 )
 
                 Spacer(modifier = Modifier.height(15.dp))
@@ -200,7 +195,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it; passwordMismatch = false },
-                    placeholder = { Text("Confirmar contraseña", color = Color(0xFF999999), fontSize = 15.sp) },
+                    placeholder = { Text("Confirmar contraseña", color = colors.textHint, fontSize = 15.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(15.dp),
                     singleLine = true,
@@ -214,16 +209,11 @@ fun RegisterScreen(
                             Text(
                                 text = if (confirmPasswordVisible) "Ocultar" else "Ver",
                                 fontSize = 12.sp,
-                                color = XoundNavy
+                                color = if (isDark) XoundYellow else XoundNavy
                             )
                         }
                     },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color(0xFFE5E5E5),
-                        focusedBorderColor = XoundNavy,
-                        unfocusedContainerColor = Color(0xFFFAFAFA),
-                        focusedContainerColor = Color(0xFFFAFAFA)
-                    )
+                    colors = fieldColors
                 )
 
                 // Errores
@@ -234,7 +224,7 @@ fun RegisterScreen(
                 }
                 if (errorMsg != null) {
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = errorMsg, color = Color.Red, fontSize = 12.sp)
+                    Text(text = errorMsg, color = colors.errorColor, fontSize = 12.sp)
                 }
 
                 Spacer(modifier = Modifier.height(15.dp))
@@ -283,7 +273,7 @@ fun RegisterScreen(
                                 append("Inicia sesión")
                             }
                         },
-                        color = Color.Black,
+                        color = colors.textPrimary,
                         textAlign = TextAlign.Center,
                         fontSize = 13.sp
                     )

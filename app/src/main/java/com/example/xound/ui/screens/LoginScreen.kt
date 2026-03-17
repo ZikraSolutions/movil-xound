@@ -3,6 +3,7 @@ package com.example.xound.ui.screens
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,21 +29,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.xound.R
-import com.example.xound.ui.theme.XOUNDTheme
-import com.example.xound.ui.theme.XoundNavy
-import com.example.xound.ui.theme.XoundYellow
+import com.example.xound.ui.theme.*
 import com.example.xound.ui.viewmodel.AuthUiState
 import com.example.xound.ui.viewmodel.AuthViewModel
 
 // Usada también por RegisterScreen
 @Composable
 fun XoundLogo() {
+    val isDark = ThemeState.isDark(isSystemInDarkTheme())
+    val logoColor = if (isDark) Color.White else XoundNavy
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = "X",
             fontSize = 44.sp,
             fontWeight = FontWeight.Black,
-            color = XoundNavy,
+            color = logoColor,
             letterSpacing = (-1).sp
         )
         Canvas(modifier = Modifier.size(38.dp)) {
@@ -51,15 +52,15 @@ fun XoundLogo() {
             val outerR = size.minDimension / 2f
             val innerR = outerR * 0.38f
             val holeR = outerR * 0.09f
-            drawCircle(color = XoundNavy, radius = outerR, center = androidx.compose.ui.geometry.Offset(cx, cy))
+            drawCircle(color = if (isDark) Color.White else XoundNavy, radius = outerR, center = androidx.compose.ui.geometry.Offset(cx, cy))
             drawCircle(color = XoundYellow, radius = innerR, center = androidx.compose.ui.geometry.Offset(cx, cy))
-            drawCircle(color = XoundNavy, radius = holeR, center = androidx.compose.ui.geometry.Offset(cx, cy))
+            drawCircle(color = if (isDark) Color.White else XoundNavy, radius = holeR, center = androidx.compose.ui.geometry.Offset(cx, cy))
         }
         Text(
             text = "UND",
             fontSize = 44.sp,
             fontWeight = FontWeight.Black,
-            color = XoundNavy,
+            color = logoColor,
             letterSpacing = (-1).sp
         )
     }
@@ -71,6 +72,8 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
 ) {
+    val colors = LocalXoundColors.current
+    val isDark = ThemeState.isDark(isSystemInDarkTheme())
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -89,7 +92,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(if (isDark) colors.screenBackground else Color.White)
     ) {
         // Círculo naranja — detrás de la ola
         Box(
@@ -143,32 +146,34 @@ fun LoginScreen(
                     .padding(horizontal = 40.dp)
                     .padding(top = 20.dp)
             ) {
-                Text(text = "Ingresa tu cuenta", fontSize = 14.sp, color = Color.Black)
+                Text(text = "Ingresa tu cuenta", fontSize = 14.sp, color = colors.textPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
-                    placeholder = { Text("Username", color = Color(0xFF999999), fontSize = 16.sp) },
+                    placeholder = { Text("Username", color = colors.textHint, fontSize = 16.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(15.dp),
                     singleLine = true,
                     enabled = !isLoading,
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color(0xFFE5E5E5),
+                        unfocusedBorderColor = colors.inputBorder,
                         focusedBorderColor = XoundNavy,
-                        unfocusedContainerColor = Color(0xFFFAFAFA),
-                        focusedContainerColor = Color(0xFFFAFAFA)
+                        unfocusedContainerColor = colors.inputBackground,
+                        focusedContainerColor = colors.inputBackground,
+                        unfocusedTextColor = colors.textPrimary,
+                        focusedTextColor = colors.textPrimary
                     )
                 )
 
                 Spacer(modifier = Modifier.height(15.dp))
 
-                Text(text = "Ingresa tu contraseña", fontSize = 14.sp, color = Color.Black)
+                Text(text = "Ingresa tu contraseña", fontSize = 14.sp, color = colors.textPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    placeholder = { Text("Contraseña", color = Color(0xFF999999), fontSize = 16.sp) },
+                    placeholder = { Text("Contraseña", color = colors.textHint, fontSize = 16.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(15.dp),
                     singleLine = true,
@@ -181,15 +186,17 @@ fun LoginScreen(
                             Text(
                                 text = if (passwordVisible) "Ocultar" else "Ver",
                                 fontSize = 12.sp,
-                                color = XoundNavy
+                                color = if (isDark) XoundYellow else XoundNavy
                             )
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color(0xFFE5E5E5),
+                        unfocusedBorderColor = colors.inputBorder,
                         focusedBorderColor = XoundNavy,
-                        unfocusedContainerColor = Color(0xFFFAFAFA),
-                        focusedContainerColor = Color(0xFFFAFAFA)
+                        unfocusedContainerColor = colors.inputBackground,
+                        focusedContainerColor = colors.inputBackground,
+                        unfocusedTextColor = colors.textPrimary,
+                        focusedTextColor = colors.textPrimary
                     )
                 )
 
@@ -198,7 +205,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = (uiState as AuthUiState.Error).message,
-                        color = Color.Red,
+                        color = colors.errorColor,
                         fontSize = 12.sp
                     )
                 }
@@ -243,7 +250,7 @@ fun LoginScreen(
                                 append("Regístrate")
                             }
                         },
-                        color = Color.Black,
+                        color = colors.textPrimary,
                         textAlign = TextAlign.Center,
                         fontSize = 14.sp
                     )

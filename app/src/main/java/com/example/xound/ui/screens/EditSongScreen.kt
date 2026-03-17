@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.xound.data.model.CreateSongRequest
 import com.example.xound.data.model.SongResponse
 import com.example.xound.data.network.RetrofitClient
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,8 +32,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
-
-private val XoundCream = Color(0xFFF5F0E8)
 
 sealed class EditSongState {
     object Idle : EditSongState()
@@ -147,6 +146,8 @@ fun EditSongScreen(
     onBack: () -> Unit = {},
     editSongViewModel: EditSongViewModel = viewModel()
 ) {
+    val colors = LocalXoundColors.current
+
     var title by remember { mutableStateOf(song.title) }
     var artist by remember { mutableStateOf(song.artist ?: "") }
     var tone by remember { mutableStateOf(song.tone ?: "") }
@@ -186,7 +187,7 @@ fun EditSongScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(top = 48.dp, bottom = 24.dp)
@@ -198,7 +199,7 @@ fun EditSongScreen(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Volver",
-                tint = XoundNavy
+                tint = colors.textPrimary
             )
         }
 
@@ -212,7 +213,7 @@ fun EditSongScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Nombre
-        EditLabel("Nombre de la canción")
+        EditLabel("Nombre de la canción", colors.textPrimary)
         Spacer(modifier = Modifier.height(6.dp))
         OutlinedTextField(
             value = title,
@@ -221,13 +222,13 @@ fun EditSongScreen(
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             enabled = !isLoading,
-            colors = editFieldColors()
+            colors = editFieldColors(colors)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Artista
-        EditLabel("Artista")
+        EditLabel("Artista", colors.textPrimary)
         Spacer(modifier = Modifier.height(6.dp))
         OutlinedTextField(
             value = artist,
@@ -236,7 +237,7 @@ fun EditSongScreen(
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             enabled = !isLoading,
-            colors = editFieldColors()
+            colors = editFieldColors(colors)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -247,7 +248,7 @@ fun EditSongScreen(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                EditLabel("Tonalidad")
+                EditLabel("Tonalidad", colors.textPrimary)
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = tone,
@@ -256,11 +257,11 @@ fun EditSongScreen(
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
                     enabled = !isLoading,
-                    colors = editFieldColors()
+                    colors = editFieldColors(colors)
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
-                EditLabel("BPM")
+                EditLabel("BPM", colors.textPrimary)
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = bpmText,
@@ -270,11 +271,11 @@ fun EditSongScreen(
                     singleLine = true,
                     enabled = !isLoading,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = editFieldColors()
+                    colors = editFieldColors(colors)
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
-                EditLabel("Ritmo")
+                EditLabel("Ritmo", colors.textPrimary)
                 Spacer(modifier = Modifier.height(6.dp))
                 OutlinedTextField(
                     value = timeSignature,
@@ -283,7 +284,7 @@ fun EditSongScreen(
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
                     enabled = !isLoading,
-                    colors = editFieldColors()
+                    colors = editFieldColors(colors)
                 )
             }
         }
@@ -346,7 +347,7 @@ fun EditSongScreen(
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = (fetchState as FetchLyricsState.Error).message,
-                color = Color.Red,
+                color = colors.errorColor,
                 fontSize = 12.sp
             )
         }
@@ -354,7 +355,7 @@ fun EditSongScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Letra
-        EditLabel("Letra")
+        EditLabel("Letra", colors.textPrimary)
         Spacer(modifier = Modifier.height(6.dp))
         OutlinedTextField(
             value = lyrics,
@@ -365,7 +366,7 @@ fun EditSongScreen(
             shape = RoundedCornerShape(12.dp),
             enabled = !isLoading,
             maxLines = 20,
-            colors = editFieldColors()
+            colors = editFieldColors(colors)
         )
 
         // Error
@@ -373,7 +374,7 @@ fun EditSongScreen(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = (state as EditSongState.Error).message,
-                color = Color.Red,
+                color = colors.errorColor,
                 fontSize = 12.sp
             )
         }
@@ -392,19 +393,19 @@ fun EditSongScreen(
                 .fillMaxWidth()
                 .height(52.dp),
             enabled = !isLoading && !isFetching,
-            colors = ButtonDefaults.buttonColors(containerColor = XoundNavy),
+            colors = ButtonDefaults.buttonColors(containerColor = XoundYellow),
             shape = RoundedCornerShape(16.dp)
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = XoundNavy,
                     strokeWidth = 2.dp,
                     modifier = Modifier.size(22.dp)
                 )
             } else {
                 Text(
                     text = "Guardar Cambios",
-                    color = Color.White,
+                    color = XoundNavy,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
@@ -414,12 +415,12 @@ fun EditSongScreen(
 }
 
 @Composable
-private fun EditLabel(text: String) {
+private fun EditLabel(text: String, color: Color) {
     Text(
         text = text,
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
-        color = Color.Black
+        color = color
     )
 }
 
@@ -452,9 +453,11 @@ private fun EditSourceChip(label: String, selected: Boolean, onClick: () -> Unit
 }
 
 @Composable
-private fun editFieldColors() = OutlinedTextFieldDefaults.colors(
-    unfocusedBorderColor = Color(0xFFE5E5E5),
+private fun editFieldColors(colors: com.example.xound.ui.theme.XoundColorScheme) = OutlinedTextFieldDefaults.colors(
+    unfocusedBorderColor = colors.inputBorder,
     focusedBorderColor = XoundNavy,
-    unfocusedContainerColor = Color.White,
-    focusedContainerColor = Color.White
+    unfocusedContainerColor = colors.inputBackground,
+    focusedContainerColor = colors.inputBackground,
+    unfocusedTextColor = colors.textPrimary,
+    focusedTextColor = colors.textPrimary
 )

@@ -2,6 +2,7 @@ package com.example.xound.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -22,16 +23,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.xound.data.local.SessionManager
 import com.example.xound.data.model.EventResponse
-import com.example.xound.ui.theme.XoundNavy
-import com.example.xound.ui.theme.XoundYellow
+import com.example.xound.ui.theme.*
 import com.example.xound.ui.viewmodel.EventViewModel
 import com.example.xound.ui.viewmodel.SongViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-
-private val XoundCream = Color(0xFFF5F0E8)
 
 @Composable
 fun HomeScreen(
@@ -44,6 +41,9 @@ fun HomeScreen(
     eventViewModel: EventViewModel = viewModel(),
     songViewModel: SongViewModel = viewModel()
 ) {
+    val colors = LocalXoundColors.current
+    val systemDark = isSystemInDarkTheme()
+    val isDark = ThemeState.isDark(systemDark)
     val userName = SessionManager.getUserName().ifBlank { "Usuario" }
     val events by eventViewModel.events.collectAsState()
     val songs by songViewModel.songs.collectAsState()
@@ -56,7 +56,7 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(top = 48.dp, bottom = 24.dp)
@@ -70,18 +70,21 @@ fun HomeScreen(
                 Icon(
                     imageVector = Icons.Default.ExitToApp,
                     contentDescription = "Cerrar sesión",
-                    tint = XoundNavy,
+                    tint = if (isDark) Color.White else XoundNavy,
                     modifier = Modifier.size(24.dp)
                 )
             }
-            Icon(
-                imageVector = Icons.Default.DarkMode,
-                contentDescription = null,
-                tint = XoundYellow,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(24.dp)
-            )
+            IconButton(
+                onClick = { ThemeState.toggleDarkMode(systemDark) },
+                modifier = Modifier.align(Alignment.CenterEnd)
+            ) {
+                Icon(
+                    imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                    contentDescription = "Cambiar tema",
+                    tint = XoundYellow,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -90,7 +93,7 @@ fun HomeScreen(
         Text(
             text = "¡Hola de nuevo!,",
             fontSize = 14.sp,
-            color = Color.Black
+            color = colors.textPrimary
         )
         Text(
             text = userName,
@@ -130,11 +133,10 @@ fun HomeScreen(
                 title = "Eventos",
                 subtitle = "Ver eventos",
                 icon = Icons.Default.Event,
-                backgroundColor = XoundNavy,
+                backgroundColor = colors.navyCardDark,
                 contentColor = Color.White,
                 modifier = Modifier.weight(1f),
                 onClick = onNavigateToEvents
-
             )
         }
 
@@ -149,7 +151,7 @@ fun HomeScreen(
                 title = "Biblioteca",
                 subtitle = "${songs.size} canciones",
                 icon = Icons.Default.LibraryMusic,
-                backgroundColor = XoundNavy,
+                backgroundColor = colors.navyCardDark,
                 contentColor = Color.White,
                 modifier = Modifier.weight(1f),
                 onClick = onNavigateToLibrary
@@ -158,7 +160,7 @@ fun HomeScreen(
                 title = "Agregar",
                 subtitle = "Nueva canción",
                 icon = Icons.Default.Add,
-                backgroundColor = XoundNavy,
+                backgroundColor = colors.navyCardDark,
                 contentColor = Color.White,
                 modifier = Modifier.weight(1f),
                 onClick = onNavigateToAddSong
@@ -172,7 +174,7 @@ fun HomeScreen(
             text = "RECIENTES",
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF888888),
+            color = colors.textSecondary,
             letterSpacing = 1.sp
         )
 
@@ -182,7 +184,7 @@ fun HomeScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = XoundNavy)
+                colors = CardDefaults.cardColors(containerColor = colors.navyCardDark)
             ) {
                 Row(
                     modifier = Modifier
@@ -220,18 +222,19 @@ fun HomeScreen(
 
 @Composable
 private fun RecentEventCard(event: EventResponse, onClick: () -> Unit = {}) {
+    val colors = LocalXoundColors.current
     val formattedDate = formatHomeEventDate(event.eventDate)
     val status = getHomeEventStatus(event)
     val statusColor = when (status) {
         "Próximo" -> XoundYellow
-        "Finalizado" -> Color(0xFF4CAF50)
-        else -> Color(0xFF888888)
+        "Finalizado" -> colors.successColor
+        else -> colors.textSecondary
     }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colors.recentCardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         onClick = onClick
     ) {
@@ -245,7 +248,7 @@ private fun RecentEventCard(event: EventResponse, onClick: () -> Unit = {}) {
             Box(
                 modifier = Modifier
                     .size(42.dp)
-                    .background(XoundNavy, RoundedCornerShape(10.dp)),
+                    .background(colors.navyCardDark, RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -264,7 +267,7 @@ private fun RecentEventCard(event: EventResponse, onClick: () -> Unit = {}) {
                     text = event.title,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = colors.textPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -273,14 +276,14 @@ private fun RecentEventCard(event: EventResponse, onClick: () -> Unit = {}) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = null,
-                            tint = Color(0xFF888888),
+                            tint = colors.textSecondary,
                             modifier = Modifier.size(12.dp)
                         )
                         Spacer(modifier = Modifier.width(2.dp))
                         Text(
                             text = event.venue,
                             fontSize = 11.sp,
-                            color = Color(0xFF888888),
+                            color = colors.textSecondary,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -320,10 +323,11 @@ private fun RecentEventCard(event: EventResponse, onClick: () -> Unit = {}) {
 
 @Composable
 private fun StatCard(number: String, label: String, modifier: Modifier = Modifier) {
+    val colors = LocalXoundColors.current
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = XoundNavy)
+        colors = CardDefaults.cardColors(containerColor = colors.navyCardDark)
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 14.dp)

@@ -26,6 +26,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.xound.data.model.EventResponse
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
 import com.example.xound.ui.viewmodel.EventViewModel
@@ -33,8 +34,6 @@ import com.example.xound.ui.viewmodel.EventWithSetlistCount
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-private val XoundCream = Color(0xFFF5F0E8)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +44,7 @@ fun EventsScreen(
     onEditEvent: (EventResponse) -> Unit = {},
     eventViewModel: EventViewModel = viewModel()
 ) {
+    val colors = LocalXoundColors.current
     val events by eventViewModel.events.collectAsState()
     val isLoading by eventViewModel.isLoading.collectAsState()
     val error by eventViewModel.error.collectAsState()
@@ -61,6 +61,7 @@ fun EventsScreen(
     if (eventToDelete != null) {
         AlertDialog(
             onDismissRequest = { eventToDelete = null },
+            containerColor = colors.dialogBackground,
             icon = {
                 Icon(
                     imageVector = Icons.Default.Delete,
@@ -72,11 +73,15 @@ fun EventsScreen(
             title = {
                 Text(
                     text = "Ocultar evento",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
                 )
             },
             text = {
-                Text("¿Estás seguro de que quieres ocultar \"${eventToDelete?.title}\"? El evento no se eliminará permanentemente.")
+                Text(
+                    "¿Estás seguro de que quieres ocultar \"${eventToDelete?.title}\"? El evento no se eliminará permanentemente.",
+                    color = colors.textPrimary
+                )
             },
             confirmButton = {
                 Button(
@@ -91,7 +96,7 @@ fun EventsScreen(
             },
             dismissButton = {
                 OutlinedButton(onClick = { eventToDelete = null }) {
-                    Text("Cancelar")
+                    Text("Cancelar", color = colors.textPrimary)
                 }
             }
         )
@@ -100,7 +105,7 @@ fun EventsScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
     ) {
         Column(
             modifier = Modifier
@@ -116,7 +121,7 @@ fun EventsScreen(
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Volver",
-                    tint = XoundNavy
+                    tint = colors.textPrimary
                 )
             }
 
@@ -130,7 +135,7 @@ fun EventsScreen(
             Text(
                 text = "$upcomingCount próximos",
                 fontSize = 14.sp,
-                color = Color(0xFF888888)
+                color = colors.textSecondary
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -153,7 +158,7 @@ fun EventsScreen(
                 ) {
                     Text(
                         text = error ?: "Error desconocido",
-                        color = Color.Red,
+                        color = colors.errorColor,
                         fontSize = 14.sp
                     )
                 }
@@ -180,7 +185,7 @@ fun EventsScreen(
                             ) {
                                 Text(
                                     text = "No hay eventos aún",
-                                    color = Color(0xFF888888),
+                                    color = colors.textSecondary,
                                     fontSize = 14.sp
                                 )
                             }
@@ -311,6 +316,7 @@ private fun SwipeableEventCard(
 
 @Composable
 private fun EventCard(eventItem: EventWithSetlistCount, onClick: () -> Unit = {}) {
+    val colors = LocalXoundColors.current
     val event = eventItem.event
     val status = getEventStatus(event)
     val formattedDate = formatEventDate(event.eventDate)
@@ -318,7 +324,7 @@ private fun EventCard(eventItem: EventWithSetlistCount, onClick: () -> Unit = {}
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = XoundNavy),
+        colors = CardDefaults.cardColors(containerColor = colors.navyCardDark),
         onClick = onClick
     ) {
         Column(

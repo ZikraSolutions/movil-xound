@@ -29,13 +29,12 @@ import coil.compose.AsyncImage
 import com.example.xound.data.network.CoverArtService
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.xound.data.model.SongResponse
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
 import com.example.xound.ui.viewmodel.SongViewModel
 import kotlin.math.abs
 import kotlin.math.roundToInt
-
-private val XoundCream = Color(0xFFF5F0E8)
 
 private val thumbnailColors = listOf(
     Color(0xFF7B2D8E),
@@ -54,6 +53,7 @@ fun LibraryScreen(
     onViewSong: (SongResponse) -> Unit = {},
     songViewModel: SongViewModel = viewModel()
 ) {
+    val colors = LocalXoundColors.current
     val songs by songViewModel.songs.collectAsState()
     val favorites by songViewModel.favorites.collectAsState()
     val isLoading by songViewModel.isLoading.collectAsState()
@@ -84,6 +84,7 @@ fun LibraryScreen(
     if (songToDelete != null) {
         AlertDialog(
             onDismissRequest = { songToDelete = null },
+            containerColor = colors.dialogBackground,
             icon = {
                 Icon(
                     imageVector = Icons.Default.Delete,
@@ -95,11 +96,15 @@ fun LibraryScreen(
             title = {
                 Text(
                     text = "Eliminar cancion",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
                 )
             },
             text = {
-                Text("¿Estás seguro de que quieres eliminar la cancion \"${songToDelete?.title}\"?")
+                Text(
+                    "¿Estás seguro de que quieres eliminar la cancion \"${songToDelete?.title}\"?",
+                    color = colors.textPrimary
+                )
             },
             confirmButton = {
                 Button(
@@ -124,6 +129,7 @@ fun LibraryScreen(
     if (deleteError != null) {
         AlertDialog(
             onDismissRequest = { songViewModel.clearDeleteError() },
+            containerColor = colors.dialogBackground,
             icon = {
                 Icon(
                     imageVector = Icons.Default.Warning,
@@ -135,11 +141,15 @@ fun LibraryScreen(
             title = {
                 Text(
                     text = "No se pudo eliminar",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
                 )
             },
             text = {
-                Text(deleteError ?: "")
+                Text(
+                    deleteError ?: "",
+                    color = colors.textPrimary
+                )
             },
             confirmButton = {
                 Button(
@@ -155,7 +165,7 @@ fun LibraryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
             .padding(top = 48.dp)
     ) {
         // Header
@@ -186,7 +196,7 @@ fun LibraryScreen(
                 Text(
                     text = "${songs.size} canciones",
                     fontSize = 14.sp,
-                    color = Color(0xFF888888)
+                    color = colors.textSecondary
                 )
             }
 
@@ -215,12 +225,12 @@ fun LibraryScreen(
                 searchQuery = it
                 songViewModel.searchSongs(it)
             },
-            placeholder = { Text("Search", color = Color(0xFF999999)) },
+            placeholder = { Text("Search", color = colors.textHint) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
-                    tint = Color(0xFF999999),
+                    tint = colors.textHint,
                     modifier = Modifier.size(20.dp)
                 )
             },
@@ -230,10 +240,12 @@ fun LibraryScreen(
             shape = RoundedCornerShape(14.dp),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color(0xFFE0E0E0),
+                unfocusedBorderColor = colors.searchBorder,
                 focusedBorderColor = XoundNavy,
-                unfocusedContainerColor = Color.White,
-                focusedContainerColor = Color.White
+                unfocusedContainerColor = colors.searchBackground,
+                focusedContainerColor = colors.searchBackground,
+                unfocusedTextColor = colors.textPrimary,
+                focusedTextColor = colors.textPrimary
             )
         )
 
@@ -261,8 +273,8 @@ fun LibraryScreen(
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = XoundNavy,
                         selectedLabelColor = Color.White,
-                        containerColor = Color.Transparent,
-                        labelColor = XoundNavy
+                        containerColor = colors.chipUnselectedBg,
+                        labelColor = colors.chipUnselectedText
                     ),
                     border = FilterChipDefaults.filterChipBorder(
                         borderColor = XoundNavy,
@@ -316,7 +328,7 @@ fun LibraryScreen(
                             Text(
                                 text = if (selectedFilter == "Favoritos") "Sin favoritos aún"
                                 else "No hay canciones",
-                                color = Color(0xFF888888),
+                                color = colors.textSecondary,
                                 fontSize = 14.sp
                             )
                         }
@@ -430,6 +442,7 @@ private fun SwipeableSongCard(
 
 @Composable
 private fun SongCard(song: SongResponse, colorIndex: Int, isFavorite: Boolean = false, onToggleFavorite: () -> Unit = {}, onClick: () -> Unit = {}) {
+    val colors = LocalXoundColors.current
     var coverUrl by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(song.id) {
@@ -439,7 +452,7 @@ private fun SongCard(song: SongResponse, colorIndex: Int, isFavorite: Boolean = 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         onClick = onClick
     ) {
@@ -482,7 +495,7 @@ private fun SongCard(song: SongResponse, colorIndex: Int, isFavorite: Boolean = 
                     text = song.title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = colors.textPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -509,7 +522,7 @@ private fun SongCard(song: SongResponse, colorIndex: Int, isFavorite: Boolean = 
                         Text(
                             text = song.artist,
                             fontSize = 12.sp,
-                            color = Color(0xFF888888),
+                            color = colors.textSecondary,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )

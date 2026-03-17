@@ -22,6 +22,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.xound.data.model.CreateSongRequest
 import com.example.xound.data.network.RetrofitClient
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,8 +30,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
-
-private val XoundCream = Color(0xFFF5F0E8)
 
 // ViewModel
 sealed class AddSongState {
@@ -153,6 +152,8 @@ fun AddSongScreen(
     onBack: () -> Unit = {},
     addSongViewModel: AddSongViewModel = viewModel()
 ) {
+    val colors = LocalXoundColors.current
+
     var title by remember { mutableStateOf("") }
     var artist by remember { mutableStateOf("") }
     var tone by remember { mutableStateOf("") }
@@ -193,7 +194,7 @@ fun AddSongScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(top = 48.dp, bottom = 24.dp)
@@ -226,7 +227,7 @@ fun AddSongScreen(
         OutlinedTextField(
             value = title,
             onValueChange = { title = it },
-            placeholder = { Text("Nombre de la canción", color = Color(0xFF999999)) },
+            placeholder = { Text("Nombre de la canción", color = colors.textHint) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
@@ -242,7 +243,7 @@ fun AddSongScreen(
         OutlinedTextField(
             value = artist,
             onValueChange = { artist = it },
-            placeholder = { Text("Ej. Queen", color = Color(0xFF999999)) },
+            placeholder = { Text("Ej. Queen", color = colors.textHint) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
@@ -263,7 +264,7 @@ fun AddSongScreen(
                 OutlinedTextField(
                     value = tone,
                     onValueChange = { tone = it },
-                    placeholder = { Text("G", color = Color(0xFF999999)) },
+                    placeholder = { Text("G", color = colors.textHint) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -277,7 +278,7 @@ fun AddSongScreen(
                 OutlinedTextField(
                     value = bpmText,
                     onValueChange = { bpmText = it.filter { c -> c.isDigit() } },
-                    placeholder = { Text("120", color = Color(0xFF999999)) },
+                    placeholder = { Text("120", color = colors.textHint) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -292,7 +293,7 @@ fun AddSongScreen(
                 OutlinedTextField(
                     value = timeSignature,
                     onValueChange = { timeSignature = it },
-                    placeholder = { Text("4/4", color = Color(0xFF999999)) },
+                    placeholder = { Text("4/4", color = colors.textHint) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -360,7 +361,7 @@ fun AddSongScreen(
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = (fetchState as FetchLyricsState.Error).message,
-                color = Color.Red,
+                color = colors.errorColor,
                 fontSize = 12.sp
             )
         }
@@ -373,7 +374,7 @@ fun AddSongScreen(
         OutlinedTextField(
             value = lyrics,
             onValueChange = { lyrics = it },
-            placeholder = { Text("Letra de la canción...", color = Color(0xFF999999)) },
+            placeholder = { Text("Letra de la canción...", color = colors.textHint) },
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 150.dp),
@@ -388,7 +389,7 @@ fun AddSongScreen(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = (saveState as AddSongState.Error).message,
-                color = Color.Red,
+                color = colors.errorColor,
                 fontSize = 12.sp
             )
         }
@@ -405,19 +406,19 @@ fun AddSongScreen(
                 .fillMaxWidth()
                 .height(52.dp),
             enabled = !isSaving && !isFetching,
-            colors = ButtonDefaults.buttonColors(containerColor = XoundNavy),
+            colors = ButtonDefaults.buttonColors(containerColor = XoundYellow),
             shape = RoundedCornerShape(16.dp)
         ) {
             if (isSaving) {
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = XoundNavy,
                     strokeWidth = 2.dp,
                     modifier = Modifier.size(22.dp)
                 )
             } else {
                 Text(
                     text = "Guardar Canción",
-                    color = Color.White,
+                    color = XoundNavy,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
@@ -456,18 +457,24 @@ private fun SourceChip(label: String, selected: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun FormLabel(text: String) {
+    val colors = LocalXoundColors.current
     Text(
         text = text,
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
-        color = Color.Black
+        color = colors.textPrimary
     )
 }
 
 @Composable
-private fun fieldColors() = OutlinedTextFieldDefaults.colors(
-    unfocusedBorderColor = Color(0xFFE5E5E5),
-    focusedBorderColor = XoundNavy,
-    unfocusedContainerColor = Color.White,
-    focusedContainerColor = Color.White
-)
+private fun fieldColors(): TextFieldColors {
+    val colors = LocalXoundColors.current
+    return OutlinedTextFieldDefaults.colors(
+        unfocusedBorderColor = colors.inputBorder,
+        focusedBorderColor = XoundNavy,
+        unfocusedContainerColor = colors.inputBackground,
+        focusedContainerColor = colors.inputBackground,
+        unfocusedTextColor = colors.textPrimary,
+        focusedTextColor = colors.textPrimary
+    )
+}

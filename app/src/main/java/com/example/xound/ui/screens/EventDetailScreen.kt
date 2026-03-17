@@ -31,14 +31,13 @@ import com.example.xound.data.model.EventResponse
 import com.example.xound.data.network.CoverArtService
 import com.example.xound.data.model.SetlistSongResponse
 import com.example.xound.data.model.SongResponse
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
 import com.example.xound.ui.viewmodel.EventViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-private val XoundCream = Color(0xFFF5F0E8)
 
 private val instrumentColors = listOf(
     Color(0xFF7B2D8E),
@@ -58,6 +57,7 @@ fun EventDetailScreen(
     onViewSong: (SongResponse) -> Unit = {},
     eventViewModel: EventViewModel
 ) {
+    val colors = LocalXoundColors.current
     val setlistSongs by eventViewModel.setlistSongs.collectAsState()
     val setlistLoading by eventViewModel.setlistLoading.collectAsState()
 
@@ -81,6 +81,7 @@ fun EventDetailScreen(
     if (songToRemove != null) {
         AlertDialog(
             onDismissRequest = { songToRemove = null },
+            containerColor = colors.dialogBackground,
             icon = {
                 Icon(
                     imageVector = Icons.Default.Delete,
@@ -92,11 +93,15 @@ fun EventDetailScreen(
             title = {
                 Text(
                     text = "Quitar del setlist",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = colors.textPrimary
                 )
             },
             text = {
-                Text("¿Quitar \"${songToRemove?.song?.title ?: "esta canción"}\" del setlist?")
+                Text(
+                    "¿Quitar \"${songToRemove?.song?.title ?: "esta canción"}\" del setlist?",
+                    color = colors.textPrimary
+                )
             },
             confirmButton = {
                 Button(
@@ -113,7 +118,7 @@ fun EventDetailScreen(
             },
             dismissButton = {
                 OutlinedButton(onClick = { songToRemove = null }) {
-                    Text("Cancelar")
+                    Text("Cancelar", color = colors.textPrimary)
                 }
             }
         )
@@ -122,7 +127,7 @@ fun EventDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
             .padding(top = 48.dp)
     ) {
         // Header
@@ -144,7 +149,7 @@ fun EventDetailScreen(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Volver",
-                            tint = XoundNavy
+                            tint = colors.textPrimary
                         )
                     }
 
@@ -185,13 +190,13 @@ fun EventDetailScreen(
                     Text(
                         text = "  ",
                         fontSize = 14.sp,
-                        color = Color(0xFF888888)
+                        color = colors.textSecondary
                     )
                 }
                 Text(
                     text = formattedDate,
                     fontSize = 13.sp,
-                    color = Color(0xFF888888)
+                    color = colors.textSecondary
                 )
             }
 
@@ -200,7 +205,7 @@ fun EventDetailScreen(
             Text(
                 text = "${setlistSongs.size} canciones",
                 fontSize = 13.sp,
-                color = Color(0xFF888888)
+                color = colors.textSecondary
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -215,13 +220,13 @@ fun EventDetailScreen(
                     Icon(
                         imageVector = Icons.Default.Upload,
                         contentDescription = null,
-                        tint = XoundNavy,
+                        tint = XoundYellow,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = if (event.published) "Despublicar" else "Publicar",
-                        color = XoundNavy,
+                        color = colors.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -236,13 +241,13 @@ fun EventDetailScreen(
                         Icon(
                             imageVector = Icons.Default.Share,
                             contentDescription = null,
-                            tint = XoundNavy,
+                            tint = XoundYellow,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "Compartir",
-                            color = XoundNavy,
+                            color = colors.textPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -288,7 +293,7 @@ fun EventDetailScreen(
                         ) {
                             Text(
                                 text = "No hay canciones en el setlist",
-                                color = Color(0xFF888888),
+                                color = colors.textSecondary,
                                 fontSize = 14.sp
                             )
                         }
@@ -364,7 +369,6 @@ private fun SwipeableSetlistCard(
                         },
                         onHorizontalDrag = { _, dragAmount ->
                             val newOffset = offsetX + dragAmount
-                            // Only allow left swipe, limit to half
                             offsetX = newOffset.coerceIn(-cardWidth * threshold, 0f)
                         }
                     )
@@ -381,6 +385,7 @@ private fun SwipeableSetlistCard(
 
 @Composable
 private fun SetlistSongCard(setlistItem: SetlistSongResponse, colorIndex: Int, onClick: () -> Unit = {}) {
+    val colors = LocalXoundColors.current
     val song = setlistItem.song
     var coverUrl by remember { mutableStateOf<String?>(null) }
 
@@ -391,7 +396,7 @@ private fun SetlistSongCard(setlistItem: SetlistSongResponse, colorIndex: Int, o
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = XoundNavy),
+        colors = CardDefaults.cardColors(containerColor = colors.navyCardDark),
         onClick = onClick
     ) {
         Row(
@@ -476,18 +481,22 @@ fun AddSongToSetlistDialog(
     onAdd: (Long) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val colors = LocalXoundColors.current
+
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = colors.dialogBackground,
         title = {
             Text(
                 text = "Agregar al setlist",
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = colors.textPrimary
             )
         },
         text = {
             val available = songs.filter { it.id !in setlistSongIds }
             if (available.isEmpty()) {
-                Text("No hay canciones disponibles para agregar")
+                Text("No hay canciones disponibles para agregar", color = colors.textPrimary)
             } else {
                 LazyColumn(
                     modifier = Modifier.heightIn(max = 400.dp),
@@ -497,7 +506,7 @@ fun AddSongToSetlistDialog(
                         Card(
                             onClick = { onAdd(song.id) },
                             shape = RoundedCornerShape(10.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F0F0))
+                            colors = CardDefaults.cardColors(containerColor = colors.cardBackground)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -517,7 +526,7 @@ fun AddSongToSetlistDialog(
                                         text = song.title,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.Black,
+                                        color = colors.textPrimary,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -525,7 +534,7 @@ fun AddSongToSetlistDialog(
                                         Text(
                                             text = song.artist,
                                             fontSize = 12.sp,
-                                            color = Color(0xFF888888),
+                                            color = colors.textSecondary,
                                             maxLines = 1
                                         )
                                     }
@@ -552,7 +561,7 @@ fun AddSongToSetlistDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cerrar", color = XoundNavy)
+                Text("Cerrar", color = XoundYellow)
             }
         }
     )

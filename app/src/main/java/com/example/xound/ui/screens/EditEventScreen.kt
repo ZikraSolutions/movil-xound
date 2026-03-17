@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.xound.data.model.EventResponse
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
 import com.example.xound.ui.viewmodel.EditEventState
@@ -27,8 +28,6 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val XoundCream = Color(0xFFF5F0E8)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditEventScreen(
@@ -36,6 +35,7 @@ fun EditEventScreen(
     onBack: () -> Unit = {},
     eventViewModel: EventViewModel
 ) {
+    val colors = LocalXoundColors.current
     var title by remember { mutableStateOf(event.title) }
     var selectedDate by remember {
         mutableStateOf(
@@ -68,7 +68,7 @@ fun EditEventScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(top = 48.dp, bottom = 24.dp)
@@ -80,7 +80,7 @@ fun EditEventScreen(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Volver",
-                tint = XoundNavy
+                tint = colors.textPrimary
             )
         }
 
@@ -94,7 +94,7 @@ fun EditEventScreen(
         Spacer(modifier = Modifier.height(28.dp))
 
         // Title
-        EditEventLabel("Nombre del evento")
+        Text(text = "Nombre del evento", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = title,
@@ -103,18 +103,25 @@ fun EditEventScreen(
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             enabled = !isLoading,
-            colors = editEventFieldColors()
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = colors.inputBorder,
+                focusedBorderColor = XoundNavy,
+                unfocusedContainerColor = colors.inputBackground,
+                focusedContainerColor = colors.inputBackground,
+                unfocusedTextColor = colors.textPrimary,
+                focusedTextColor = colors.textPrimary
+            )
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
         // Date
-        EditEventLabel("Fecha del evento")
+        Text(text = "Fecha del evento", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = selectedDate?.format(dateFormatter) ?: "",
             onValueChange = {},
-            placeholder = { Text("dd/mm/aaaa", color = Color(0xFF999999)) },
+            placeholder = { Text("dd/mm/aaaa", color = colors.textHint) },
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(enabled = !isLoading) { showDatePicker = true },
@@ -131,10 +138,10 @@ fun EditEventScreen(
                 )
             },
             colors = OutlinedTextFieldDefaults.colors(
-                disabledBorderColor = Color(0xFFE5E5E5),
-                disabledContainerColor = Color.White,
-                disabledTextColor = Color.Black,
-                disabledPlaceholderColor = Color(0xFF999999),
+                disabledBorderColor = colors.inputBorder,
+                disabledContainerColor = colors.inputBackground,
+                disabledTextColor = colors.textPrimary,
+                disabledPlaceholderColor = colors.textHint,
                 disabledTrailingIconColor = XoundNavy
             )
         )
@@ -168,7 +175,7 @@ fun EditEventScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         // Venue
-        EditEventLabel("Lugar del evento")
+        Text(text = "Lugar del evento", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = venue,
@@ -177,7 +184,14 @@ fun EditEventScreen(
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             enabled = !isLoading,
-            colors = editEventFieldColors()
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = colors.inputBorder,
+                focusedBorderColor = XoundNavy,
+                unfocusedContainerColor = colors.inputBackground,
+                focusedContainerColor = colors.inputBackground,
+                unfocusedTextColor = colors.textPrimary,
+                focusedTextColor = colors.textPrimary
+            )
         )
 
         // Error
@@ -185,7 +199,7 @@ fun EditEventScreen(
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = (editState as EditEventState.Error).message,
-                color = Color.Red,
+                color = colors.errorColor,
                 fontSize = 12.sp
             )
         }
@@ -205,19 +219,19 @@ fun EditEventScreen(
                 .fillMaxWidth()
                 .height(52.dp),
             enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(containerColor = XoundNavy),
+            colors = ButtonDefaults.buttonColors(containerColor = XoundYellow),
             shape = RoundedCornerShape(16.dp)
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = XoundNavy,
                     strokeWidth = 2.dp,
                     modifier = Modifier.size(22.dp)
                 )
             } else {
                 Text(
                     text = "Guardar Cambios",
-                    color = Color.White,
+                    color = XoundNavy,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
@@ -225,21 +239,3 @@ fun EditEventScreen(
         }
     }
 }
-
-@Composable
-private fun EditEventLabel(text: String) {
-    Text(
-        text = text,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
-        color = Color.Black
-    )
-}
-
-@Composable
-private fun editEventFieldColors() = OutlinedTextFieldDefaults.colors(
-    unfocusedBorderColor = Color(0xFFE5E5E5),
-    focusedBorderColor = XoundNavy,
-    unfocusedContainerColor = Color.White,
-    focusedContainerColor = Color.White
-)

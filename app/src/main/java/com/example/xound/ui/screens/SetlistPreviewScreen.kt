@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -23,14 +22,13 @@ import coil.compose.AsyncImage
 import com.example.xound.data.model.EventResponse
 import com.example.xound.data.model.SetlistSongResponse
 import com.example.xound.data.network.CoverArtService
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
 import com.example.xound.ui.viewmodel.EventViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
-private val XoundCream = Color(0xFFF5F0E8)
 
 private val previewColors = listOf(
     Color(0xFF7B2D8E),
@@ -48,6 +46,7 @@ fun SetlistPreviewScreen(
     onStartLive: () -> Unit = {},
     eventViewModel: EventViewModel
 ) {
+    val colors = LocalXoundColors.current
     val setlistSongs by eventViewModel.setlistSongs.collectAsState()
     val setlistLoading by eventViewModel.setlistLoading.collectAsState()
 
@@ -60,7 +59,7 @@ fun SetlistPreviewScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
             .padding(top = 48.dp)
     ) {
         // Header
@@ -74,7 +73,7 @@ fun SetlistPreviewScreen(
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Volver",
-                    tint = XoundNavy
+                    tint = colors.textPrimary
                 )
             }
 
@@ -90,25 +89,25 @@ fun SetlistPreviewScreen(
                     Icon(
                         imageVector = Icons.Default.LocationOn,
                         contentDescription = null,
-                        tint = Color(0xFF888888),
+                        tint = colors.textSecondary,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(2.dp))
                     Text(
                         text = event.venue,
                         fontSize = 13.sp,
-                        color = Color(0xFF888888)
+                        color = colors.textSecondary
                     )
                     Text(
                         text = "  •  ",
                         fontSize = 13.sp,
-                        color = Color(0xFF888888)
+                        color = colors.textSecondary
                     )
                 }
                 Text(
                     text = formattedDate,
                     fontSize = 13.sp,
-                    color = Color(0xFF888888)
+                    color = colors.textSecondary
                 )
             }
 
@@ -118,7 +117,7 @@ fun SetlistPreviewScreen(
                 text = "${setlistSongs.size} canciones en el setlist",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF666666)
+                color = colors.textSecondary
             )
         }
 
@@ -151,7 +150,7 @@ fun SetlistPreviewScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "No hay canciones en el setlist",
-                        color = Color(0xFF888888),
+                        color = colors.textSecondary,
                         fontSize = 14.sp
                     )
                 }
@@ -176,7 +175,7 @@ fun SetlistPreviewScreen(
         if (setlistSongs.isNotEmpty()) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = XoundCream,
+                color = colors.screenBackground,
                 shadowElevation = 8.dp
             ) {
                 Column(
@@ -218,6 +217,7 @@ private fun PreviewSongCard(
     index: Int,
     colorIndex: Int
 ) {
+    val colors = LocalXoundColors.current
     val song = setlistItem.song
     var coverUrl by remember { mutableStateOf<String?>(null) }
 
@@ -228,7 +228,7 @@ private fun PreviewSongCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colors.cardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -242,7 +242,7 @@ private fun PreviewSongCard(
                 text = "$index",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFAAAAAA),
+                color = colors.textHint,
                 modifier = Modifier.width(24.dp)
             )
 
@@ -279,7 +279,7 @@ private fun PreviewSongCard(
                     text = song?.title ?: "Canción",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = colors.textPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -291,7 +291,7 @@ private fun PreviewSongCard(
                         Text(
                             text = song!!.artist!!,
                             fontSize = 12.sp,
-                            color = Color(0xFF888888),
+                            color = colors.textSecondary,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -320,7 +320,7 @@ private fun PreviewSongCard(
                     Text(
                         text = "${song.bpm} BPM",
                         fontSize = 10.sp,
-                        color = Color(0xFF999999)
+                        color = colors.textHint
                     )
                 }
             }

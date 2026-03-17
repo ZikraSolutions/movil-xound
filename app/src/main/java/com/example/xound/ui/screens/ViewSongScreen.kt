@@ -11,17 +11,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.xound.data.model.SongResponse
-import com.example.xound.ui.theme.XoundNavy
+import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundYellow
 
-private val XoundCream = Color(0xFFF5F0E8)
 private val ChordColor = Color(0xFFE5A100)
 
 @Composable
@@ -30,10 +26,12 @@ fun ViewSongScreen(
     eventName: String? = null,
     onBack: () -> Unit = {}
 ) {
+    val colors = LocalXoundColors.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(XoundCream)
+            .background(colors.screenBackground)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(top = 48.dp, bottom = 24.dp)
@@ -46,7 +44,7 @@ fun ViewSongScreen(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Volver",
-                tint = XoundNavy
+                tint = colors.textPrimary
             )
         }
 
@@ -56,7 +54,7 @@ fun ViewSongScreen(
                 text = eventName,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF888888)
+                color = colors.textSecondary
             )
             Spacer(modifier = Modifier.height(4.dp))
         }
@@ -81,7 +79,7 @@ fun ViewSongScreen(
             Text(
                 text = subtitle,
                 fontSize = 14.sp,
-                color = Color(0xFF666666)
+                color = colors.textSecondary
             )
         }
 
@@ -108,7 +106,7 @@ fun ViewSongScreen(
             Text(
                 text = "No hay letra disponible",
                 fontSize = 14.sp,
-                color = Color(0xFF888888)
+                color = colors.textSecondary
             )
         }
     }
@@ -132,6 +130,7 @@ private fun SongBadge(text: String) {
 
 @Composable
 private fun LyricsWithChords(text: String) {
+    val colors = LocalXoundColors.current
     val lines = text.split("\n")
     var i = 0
 
@@ -157,7 +156,7 @@ private fun LyricsWithChords(text: String) {
 
                 if (nextTrimmed.isNotBlank() && !isChordLine(nextTrimmed) && !isSectionHeader(nextTrimmed)) {
                     // Chord line + lyrics line pair
-                    ChordLyricPair(chordLine = line, lyricLine = nextLine)
+                    ChordLyricPair(chordLine = line, lyricLine = nextLine, lyricsColor = colors.lyricsText)
                     i += 2
                 } else {
                     // Chord-only line (like intro chords)
@@ -177,7 +176,7 @@ private fun LyricsWithChords(text: String) {
                 Text(
                     text = trimmed,
                     fontSize = 15.sp,
-                    color = Color.Black,
+                    color = colors.lyricsText,
                     lineHeight = 22.sp
                 )
                 i++
@@ -187,7 +186,7 @@ private fun LyricsWithChords(text: String) {
 }
 
 @Composable
-private fun ChordLyricPair(chordLine: String, lyricLine: String) {
+private fun ChordLyricPair(chordLine: String, lyricLine: String, lyricsColor: Color) {
     Column {
         // Chords
         Text(
@@ -201,7 +200,7 @@ private fun ChordLyricPair(chordLine: String, lyricLine: String) {
         Text(
             text = lyricLine.trimEnd(),
             fontSize = 15.sp,
-            color = Color.Black,
+            color = lyricsColor,
             lineHeight = 22.sp,
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
         )
