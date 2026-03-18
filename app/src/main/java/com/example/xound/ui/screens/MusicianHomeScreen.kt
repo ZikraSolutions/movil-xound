@@ -38,6 +38,7 @@ fun MusicianHomeScreen(
     onNavigateToEvents: () -> Unit = {},
     onNavigateToLibrary: () -> Unit = {},
     onNavigateToLiveMode: () -> Unit = {},
+    onNavigateToBand: () -> Unit = {},
     onEventClick: (EventResponse) -> Unit = {},
     onSongClick: (SongResponse) -> Unit = {},
     eventViewModel: EventViewModel = viewModel(),
@@ -148,41 +149,29 @@ fun MusicianHomeScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Action card - Biblioteca (full width)
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-                .clickable { onNavigateToLibrary() },
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = colors.navyCardDark)
+        // Action cards - row 2: Biblioteca + Banda
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Icon(
-                    imageVector = Icons.Default.LibraryMusic,
-                    contentDescription = "Biblioteca",
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
-                Column {
-                    Text(
-                        text = "Biblioteca",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "${songs.size} canciones",
-                        fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
-                }
-            }
+            MusicianActionCard(
+                title = "Biblioteca",
+                subtitle = "${songs.size} canciones",
+                icon = Icons.Default.LibraryMusic,
+                backgroundColor = colors.navyCardDark,
+                contentColor = Color.White,
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToLibrary
+            )
+            MusicianActionCard(
+                title = "Banda",
+                subtitle = "Miembros y códigos",
+                icon = Icons.Default.Group,
+                backgroundColor = colors.navyCardDark,
+                contentColor = Color.White,
+                modifier = Modifier.weight(1f),
+                onClick = onNavigateToBand
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))

@@ -37,6 +37,7 @@ fun HomeScreen(
     onNavigateToLibrary: () -> Unit = {},
     onNavigateToAddSong: () -> Unit = {},
     onNavigateToLiveMode: () -> Unit = {},
+    onNavigateToBand: () -> Unit = {},
     onEventClick: (EventResponse) -> Unit = {},
     eventViewModel: EventViewModel = viewModel(),
     songViewModel: SongViewModel = viewModel()
@@ -166,6 +167,19 @@ fun HomeScreen(
                 onClick = onNavigateToAddSong
             )
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Action grid - fila 3: Banda
+        ActionCard(
+            title = "Banda",
+            subtitle = "Miembros y códigos",
+            icon = Icons.Default.Group,
+            backgroundColor = colors.navyCardDark,
+            contentColor = Color.White,
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onNavigateToBand
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 

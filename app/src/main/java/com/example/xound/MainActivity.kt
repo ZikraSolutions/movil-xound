@@ -14,6 +14,7 @@ import com.example.xound.ui.screens.*
 import com.example.xound.ui.theme.ThemeState
 import com.example.xound.ui.theme.XOUNDTheme
 import com.example.xound.ui.viewmodel.AuthViewModel
+import com.example.xound.ui.viewmodel.BandViewModel
 import com.example.xound.ui.viewmodel.EventViewModel
 import com.example.xound.ui.viewmodel.SongViewModel
 
@@ -28,6 +29,7 @@ class MainActivity : ComponentActivity() {
                 val authViewModel: AuthViewModel = viewModel()
                 val eventViewModel: EventViewModel = viewModel()
                 val songViewModel: SongViewModel = viewModel()
+                val bandViewModel: BandViewModel = viewModel()
                 val initialScreen = when {
                     !SessionManager.isLoggedIn() -> "login"
                     !SessionManager.hasSelectedMode() -> "roleSelection"
@@ -79,6 +81,9 @@ class MainActivity : ComponentActivity() {
                 BackHandler(enabled = currentScreen == "setlistPreview") {
                     currentScreen = "selectEventLive"
                 }
+                BackHandler(enabled = currentScreen == "band") {
+                    currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
+                }
                 BackHandler(enabled = currentScreen == "liveMode") {
                     currentScreen = "setlistPreview"
                 }
@@ -113,6 +118,7 @@ class MainActivity : ComponentActivity() {
                         onNavigateToLibrary = { currentScreen = "library" },
                         onNavigateToAddSong = { currentScreen = "addSong" },
                         onNavigateToLiveMode = { currentScreen = "selectEventLive" },
+                        onNavigateToBand = { currentScreen = "band" },
                         onEventClick = { event ->
                             selectedEvent = event
                             eventDetailOrigin = "home"
@@ -129,6 +135,7 @@ class MainActivity : ComponentActivity() {
                         onNavigateToEvents = { currentScreen = "events" },
                         onNavigateToLibrary = { currentScreen = "library" },
                         onNavigateToLiveMode = { currentScreen = "selectEventLive" },
+                        onNavigateToBand = { currentScreen = "band" },
                         onEventClick = { event ->
                             selectedEvent = event
                             eventDetailOrigin = "musicianHome"
@@ -209,6 +216,12 @@ class MainActivity : ComponentActivity() {
                             eventViewModel = eventViewModel
                         )
                     }
+                    "band" -> BandScreen(
+                        onBack = {
+                            currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
+                        },
+                        bandViewModel = bandViewModel
+                    )
                     "library" -> LibraryScreen(
                         onBack = {
                             currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"

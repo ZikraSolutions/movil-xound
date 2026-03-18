@@ -2,6 +2,8 @@ package com.example.xound.data.network
 
 import com.example.xound.data.model.AuthRequest
 import com.example.xound.data.model.AuthResponse
+import com.example.xound.data.model.BandMemberResponse
+import com.example.xound.data.model.BandResponse
 import com.example.xound.data.model.CreateEventRequest
 import com.example.xound.data.model.CreateSongRequest
 import com.example.xound.data.model.EventResponse
@@ -28,6 +30,18 @@ interface ApiService {
     // Bands
     @POST("api/bands/join")
     suspend fun joinBand(@Body body: Map<String, String>): Any
+
+    @GET("api/bands/my")
+    suspend fun getMyBand(): BandResponse
+
+    @GET("api/bands/member")
+    suspend fun getMyBandAsMember(): BandResponse
+
+    @GET("api/bands/{bandId}/members")
+    suspend fun getBandMembers(@Path("bandId") bandId: Long): List<BandMemberResponse>
+
+    @POST("api/bands/regenerate-code")
+    suspend fun regenerateInviteCode(): Map<String, String>
 
     // Admin code
     @POST("api/admin/use-admin-code")
@@ -65,6 +79,9 @@ interface ApiService {
     // Songs
     @GET("api/songs")
     suspend fun getSongs(): List<SongResponse>
+
+    @GET("api/songs/band")
+    suspend fun getBandSongs(): List<SongResponse>
 
     @GET("api/songs/search")
     suspend fun searchSongs(@Query("title") title: String): List<SongResponse>

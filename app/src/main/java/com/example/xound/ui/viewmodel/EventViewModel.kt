@@ -184,7 +184,11 @@ class EventViewModel : ViewModel() {
 
                 // Always fetch full songs to ensure lyrics are available
                 // (the setlist JOIN may not include lyrics column on older backends)
-                val songs = RetrofitClient.apiService.getSongs()
+                val songs = if (SessionManager.isMusician()) {
+                    RetrofitClient.apiService.getBandSongs()
+                } else {
+                    RetrofitClient.apiService.getSongs()
+                }
                 val songMap = songs.associateBy { it.id }
 
                 _setlistSongs.value = setlist.map { item ->
@@ -207,7 +211,11 @@ class EventViewModel : ViewModel() {
     fun fetchAllSongs() {
         viewModelScope.launch {
             try {
-                _allSongs.value = RetrofitClient.apiService.getSongs()
+                _allSongs.value = if (SessionManager.isMusician()) {
+                    RetrofitClient.apiService.getBandSongs()
+                } else {
+                    RetrofitClient.apiService.getSongs()
+                }
             } catch (_: Exception) { }
         }
     }

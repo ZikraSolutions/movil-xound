@@ -2,6 +2,7 @@ package com.example.xound.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.xound.data.local.SessionManager
 import com.example.xound.data.model.SongResponse
 import com.example.xound.data.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +35,11 @@ class SongViewModel : ViewModel() {
             _isLoading.value = true
             _error.value = null
             try {
-                val songList = RetrofitClient.apiService.getSongs()
+                val songList = if (SessionManager.isMusician()) {
+                    RetrofitClient.apiService.getBandSongs()
+                } else {
+                    RetrofitClient.apiService.getSongs()
+                }
                 _songs.value = songList
             } catch (e: HttpException) {
                 _error.value = "Error ${e.code()}: ${e.response()?.errorBody()?.string() ?: e.message()}"
