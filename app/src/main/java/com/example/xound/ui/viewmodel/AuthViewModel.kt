@@ -38,7 +38,8 @@ class AuthViewModel : ViewModel() {
                     token = token,
                     userId = response.user?.id,
                     name = response.user?.name,
-                    email = response.user?.email
+                    email = response.user?.email,
+                    roleName = response.user?.roleName
                 )
                 _uiState.value = AuthUiState.Success(token)
             } catch (e: HttpException) {
@@ -66,7 +67,8 @@ class AuthViewModel : ViewModel() {
                     token = token,
                     userId = response.user?.id,
                     name = response.user?.name ?: name.trim(),
-                    email = response.user?.email ?: username.trim()
+                    email = response.user?.email ?: username.trim(),
+                    roleName = response.user?.roleName
                 )
                 _uiState.value = AuthUiState.Success(token)
             } catch (e: HttpException) {

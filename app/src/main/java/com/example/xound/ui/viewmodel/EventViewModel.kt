@@ -6,6 +6,7 @@ import com.example.xound.data.model.CreateEventRequest
 import com.example.xound.data.model.EventResponse
 import com.example.xound.data.model.SetlistSongResponse
 import com.example.xound.data.model.SongResponse
+import com.example.xound.data.local.SessionManager
 import com.example.xound.data.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -68,7 +69,11 @@ class EventViewModel : ViewModel() {
             _isLoading.value = true
             _error.value = null
             try {
-                val eventList = RetrofitClient.apiService.getEvents()
+                val eventList = if (SessionManager.isMusician()) {
+                    RetrofitClient.apiService.getPublishedEvents()
+                } else {
+                    RetrofitClient.apiService.getEvents()
+                }
                 val eventsWithCount = eventList.map { event ->
                     val count = try {
                         RetrofitClient.apiService.getSetlist(event.id).size

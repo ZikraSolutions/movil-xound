@@ -28,7 +28,12 @@ class MainActivity : ComponentActivity() {
                 val authViewModel: AuthViewModel = viewModel()
                 val eventViewModel: EventViewModel = viewModel()
                 val songViewModel: SongViewModel = viewModel()
-                val initialScreen = if (SessionManager.isLoggedIn()) "home" else "login"
+                val initialScreen = when {
+                    !SessionManager.isLoggedIn() -> "login"
+                    !SessionManager.hasSelectedMode() -> "roleSelection"
+                    SessionManager.isMusician() -> "musicianHome"
+                    else -> "home"
+                }
                 var currentScreen by remember { mutableStateOf(initialScreen) }
                 var songToEdit by remember { mutableStateOf<SongResponse?>(null) }
                 var songToView by remember { mutableStateOf<SongResponse?>(null) }
@@ -44,14 +49,17 @@ class MainActivity : ComponentActivity() {
                 BackHandler(enabled = currentScreen == "register") {
                     currentScreen = "login"
                 }
+                BackHandler(enabled = currentScreen == "musicianHome") {
+                    // Don't go back from musician home
+                }
                 BackHandler(enabled = currentScreen == "events" || currentScreen == "library") {
-                    currentScreen = "home"
+                    currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
                 }
                 BackHandler(enabled = currentScreen == "createEvent") {
                     currentScreen = "events"
                 }
                 BackHandler(enabled = currentScreen == "addSong") {
-                    currentScreen = "home"
+                    currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
                 }
                 BackHandler(enabled = currentScreen == "editSong") {
                     currentScreen = "library"
@@ -66,7 +74,7 @@ class MainActivity : ComponentActivity() {
                     currentScreen = "events"
                 }
                 BackHandler(enabled = currentScreen == "selectEventLive") {
-                    currentScreen = "home"
+                    currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
                 }
                 BackHandler(enabled = currentScreen == "setlistPreview") {
                     currentScreen = "selectEventLive"
@@ -78,13 +86,23 @@ class MainActivity : ComponentActivity() {
                 when (currentScreen) {
                     "login" -> LoginScreen(
                         onNavigateToRegister = { currentScreen = "register" },
-                        onLoginSuccess = { currentScreen = "home" },
+                        onLoginSuccess = {
+                            currentScreen = if (SessionManager.hasSelectedMode()) {
+                                if (SessionManager.isMusician()) "musicianHome" else "home"
+                            } else {
+                                "roleSelection"
+                            }
+                        },
                         authViewModel = authViewModel
                     )
                     "register" -> RegisterScreen(
                         onNavigateToLogin = { currentScreen = "login" },
-                        onRegisterSuccess = { currentScreen = "login" },
+                        onRegisterSuccess = { currentScreen = "roleSelection" },
                         authViewModel = authViewModel
+                    )
+                    "roleSelection" -> RoleSelectionScreen(
+                        onSelectAdmin = { currentScreen = "home" },
+                        onSelectMusician = { currentScreen = "musicianHome" }
                     )
                     "home" -> HomeScreen(
                         onLogout = {
@@ -103,8 +121,32 @@ class MainActivity : ComponentActivity() {
                         eventViewModel = eventViewModel,
                         songViewModel = songViewModel
                     )
+                    "musicianHome" -> MusicianHomeScreen(
+                        onLogout = {
+                            authViewModel.logout()
+                            currentScreen = "login"
+                        },
+                        onNavigateToEvents = { currentScreen = "events" },
+                        onNavigateToLibrary = { currentScreen = "library" },
+                        onNavigateToLiveMode = { currentScreen = "selectEventLive" },
+                        onEventClick = { event ->
+                            selectedEvent = event
+                            eventDetailOrigin = "musicianHome"
+                            currentScreen = "eventDetail"
+                        },
+                        onSongClick = { song ->
+                            songToView = song
+                            viewSongOrigin = "musicianHome"
+                            viewSongEventName = null
+                            currentScreen = "viewSong"
+                        },
+                        eventViewModel = eventViewModel,
+                        songViewModel = songViewModel
+                    )
                     "events" -> EventsScreen(
-                        onBack = { currentScreen = "home" },
+                        onBack = {
+                            currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
+                        },
                         onCreateEvent = { currentScreen = "createEvent" },
                         onEventClick = { event ->
                             selectedEvent = event
@@ -168,8 +210,11 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     "library" -> LibraryScreen(
-                        onBack = { currentScreen = "home" },
+                        onBack = {
+                            currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
+                        },
                         onAddSong = { currentScreen = "addSong" },
+                        showAddButton = !SessionManager.isMusician(),
                         onEditSong = { song ->
                             songToEdit = song
                             currentScreen = "editSong"
@@ -183,7 +228,9 @@ class MainActivity : ComponentActivity() {
                         songViewModel = songViewModel
                     )
                     "addSong" -> AddSongScreen(
-                        onBack = { currentScreen = "home" }
+                        onBack = {
+                            currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
+                        }
                     )
                     "viewSong" -> songToView?.let { song ->
                         ViewSongScreen(
@@ -205,7 +252,9 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     "selectEventLive" -> SelectEventScreen(
-                        onBack = { currentScreen = "home" },
+                        onBack = {
+                            currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
+                        },
                         onSelectEvent = { event ->
                             liveEvent = event
                             currentScreen = "liveMode"

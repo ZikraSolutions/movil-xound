@@ -13,6 +13,9 @@ object SessionManager {
     private const val KEY_DARK_MODE = "dark_mode"
     // "system" = follow system, "on" = always dark, "off" = always light
     private const val KEY_DARK_MODE_OPTION = "dark_mode_option"
+    // "admin" or "musician"
+    private const val KEY_USER_MODE = "user_mode"
+    private const val KEY_ROLE_NAME = "role_name"
 
     private lateinit var prefs: SharedPreferences
 
@@ -20,13 +23,25 @@ object SessionManager {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
-    fun saveSession(token: String, userId: Long?, name: String?, email: String?) {
+    fun saveSession(token: String, userId: Long?, name: String?, email: String?, roleName: String? = null) {
         prefs.edit()
             .putString(KEY_TOKEN, token)
             .putLong(KEY_USER_ID, userId ?: -1L)
             .putString(KEY_USER_NAME, name ?: "")
             .putString(KEY_USER_EMAIL, email ?: "")
+            .putString(KEY_ROLE_NAME, roleName ?: "")
             .apply()
+
+        // Auto-set user mode based on backend role
+        if (roleName != null) {
+            when (roleName.uppercase()) {
+                "ADMIN", "SUPER_ADMIN" -> setUserMode("admin")
+                "MUSICIAN" -> {
+                    // Keep existing mode if already set (user already chose before)
+                    // Don't override — musician still needs to join a band first time
+                }
+            }
+        }
     }
 
     fun getToken(): String? = prefs.getString(KEY_TOKEN, null)
@@ -39,6 +54,18 @@ object SessionManager {
 
     fun isLoggedIn(): Boolean = !getToken().isNullOrBlank()
 
+    fun getUserMode(): String = prefs.getString(KEY_USER_MODE, "") ?: ""
+
+    fun setUserMode(mode: String) {
+        prefs.edit().putString(KEY_USER_MODE, mode).apply()
+    }
+
+    fun hasSelectedMode(): Boolean = getUserMode().isNotBlank()
+
+    fun isMusician(): Boolean = getUserMode() == "musician"
+
+    fun getRoleName(): String = prefs.getString(KEY_ROLE_NAME, "") ?: ""
+
     fun getDarkModeOption(): String = prefs.getString(KEY_DARK_MODE_OPTION, "system") ?: "system"
 
     fun setDarkModeOption(option: String) {
@@ -50,5 +77,6 @@ object SessionManager {
         prefs.edit().clear().apply()
         // Preserve dark mode preference across logout
         setDarkModeOption(darkOption)
+        // Mode is cleared so the user can choose again on next login
     }
 }

@@ -51,6 +51,7 @@ fun LibraryScreen(
     onAddSong: () -> Unit = {},
     onEditSong: (SongResponse) -> Unit = {},
     onViewSong: (SongResponse) -> Unit = {},
+    showAddButton: Boolean = true,
     songViewModel: SongViewModel = viewModel()
 ) {
     val colors = LocalXoundColors.current
@@ -200,19 +201,21 @@ fun LibraryScreen(
                 )
             }
 
-            IconButton(
-                onClick = onAddSong,
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .size(40.dp)
-                    .background(XoundYellow, CircleShape)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Agregar canción",
-                    tint = XoundNavy,
-                    modifier = Modifier.size(22.dp)
-                )
+            if (showAddButton) {
+                IconButton(
+                    onClick = onAddSong,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .size(40.dp)
+                        .background(XoundYellow, CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Agregar canción",
+                        tint = XoundNavy,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
         }
 

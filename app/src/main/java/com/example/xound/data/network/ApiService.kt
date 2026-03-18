@@ -25,9 +25,20 @@ interface ApiService {
     @POST("api/users/register")
     suspend fun register(@Body request: RegisterRequest): AuthResponse
 
+    // Bands
+    @POST("api/bands/join")
+    suspend fun joinBand(@Body body: Map<String, String>): Any
+
+    // Admin code
+    @POST("api/admin/use-admin-code")
+    suspend fun useAdminCode(@Body body: Map<String, String>): Any
+
     // Events
     @GET("api/events")
     suspend fun getEvents(): List<EventResponse>
+
+    @GET("api/events/published")
+    suspend fun getPublishedEvents(): List<EventResponse>
 
     @POST("api/events")
     suspend fun createEvent(@Body request: CreateEventRequest): EventResponse
