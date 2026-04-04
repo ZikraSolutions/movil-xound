@@ -48,6 +48,14 @@ fun CreateEventScreen(
     val createState by eventViewModel.createState.collectAsState()
     val isLoading = createState is CreateEventState.Loading
     val isSuccess = createState is CreateEventState.Success
+    var publishing by remember { mutableStateOf(false) }
+
+    // Navegar tras publicar — fuera del bloque isSuccess para que no desaparezca
+    LaunchedEffect(createState) {
+        if (createState is CreateEventState.Idle && publishing) {
+            onPublished()
+        }
+    }
 
     // Reset state when leaving
     DisposableEffect(Unit) {
@@ -190,7 +198,6 @@ fun CreateEventScreen(
         // Publish button (visible after creation)
         if (isSuccess) {
             val createdEvent = (createState as CreateEventState.Success).event
-            var publishing by remember { mutableStateOf(false) }
 
             // Success message
             Row(
@@ -272,12 +279,6 @@ fun CreateEventScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Navigate after publish
-            LaunchedEffect(createState) {
-                if (createState is CreateEventState.Idle && publishing) {
-                    onPublished()
-                }
-            }
         }
 
         // Error message

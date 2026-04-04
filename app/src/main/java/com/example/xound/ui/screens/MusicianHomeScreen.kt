@@ -412,7 +412,7 @@ private fun formatMusicianEventDate(dateStr: String?): String {
     if (dateStr.isNullOrBlank()) return ""
     return try {
         val date = LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy - HH:mm 'h'", Locale("es", "MX"))
+        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale("es", "MX"))
         date.format(formatter).uppercase()
     } catch (_: Exception) {
         dateStr

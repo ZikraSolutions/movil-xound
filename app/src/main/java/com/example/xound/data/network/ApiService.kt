@@ -114,6 +114,9 @@ interface ApiService {
     @GET("api/lyrics/search")
     suspend fun searchLyrics(@Query("artist") artist: String, @Query("title") title: String): LyricsResponse
 
+    @GET("api/lyrics/auto")
+    suspend fun fetchLyricsAndChords(@Query("artist") artist: String, @Query("title") title: String): Map<String, String>
+
     // Chords
     @GET("api/chords/search")
     suspend fun searchChords(@Query("q") query: String): List<Map<String, String>>

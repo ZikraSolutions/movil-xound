@@ -47,7 +47,7 @@ class EditSongViewModel : ViewModel() {
     private val _fetchState = MutableStateFlow<FetchLyricsState>(FetchLyricsState.Idle)
     val fetchState: StateFlow<FetchLyricsState> = _fetchState.asStateFlow()
 
-    fun fetchLyrics(artist: String, title: String, source: String) {
+    fun fetchLyrics(artist: String, title: String) {
         if (title.isBlank()) {
             _fetchState.value = FetchLyricsState.Error("Ingresa el nombre de la canción")
             return
@@ -55,38 +55,20 @@ class EditSongViewModel : ViewModel() {
         viewModelScope.launch {
             _fetchState.value = FetchLyricsState.Loading
             try {
-                when (source) {
-                    "LRCLIB" -> {
-                        val artistQ = artist.ifBlank { title }
-                        val response = RetrofitClient.apiService.searchLyrics(artistQ.trim(), title.trim())
-                        val lyrics = response.lyrics
-                        if (!lyrics.isNullOrBlank()) {
-                            _fetchState.value = FetchLyricsState.Success(lyrics)
-                        } else {
-                            _fetchState.value = FetchLyricsState.Error("No se encontró la letra")
-                        }
+                val response = RetrofitClient.apiService.fetchLyricsAndChords(artist.trim(), title.trim())
+                if (response["found"] == "true") {
+                    val chords = response["chords"] ?: ""
+                    val lyrics = response["lyrics"] ?: ""
+                    val tone = response["tone"]
+                    // CifraClub ya trae letra+acordes juntos; solo usar lyrics si no hay acordes
+                    val content = if (chords.isNotBlank()) chords else lyrics
+                    if (content.isNotBlank()) {
+                        _fetchState.value = FetchLyricsState.Success(content, tone = tone)
+                    } else {
+                        _fetchState.value = FetchLyricsState.Error("No se encontró letra ni acordes")
                     }
-                    "CIFRACLUB" -> {
-                        val query = if (artist.isBlank()) title.trim() else "$artist $title".trim()
-                        val results = RetrofitClient.apiService.searchChords(query)
-                        if (results.isNotEmpty()) {
-                            val url = results[0]["url"] ?: ""
-                            if (url.isNotBlank()) {
-                                val chordData = RetrofitClient.apiService.fetchChords(url)
-                                val chords = chordData["chords"] ?: ""
-                                val detectedTone = chordData["tone"] ?: extractTone(chords)
-                                if (chords.isNotBlank()) {
-                                    _fetchState.value = FetchLyricsState.Success(chords, tone = detectedTone)
-                                } else {
-                                    _fetchState.value = FetchLyricsState.Error("No se encontraron acordes")
-                                }
-                            } else {
-                                _fetchState.value = FetchLyricsState.Error("No se encontraron resultados")
-                            }
-                        } else {
-                            _fetchState.value = FetchLyricsState.Error("No se encontraron resultados")
-                        }
-                    }
+                } else {
+                    _fetchState.value = FetchLyricsState.Error("No se encontró letra ni acordes")
                 }
             } catch (e: HttpException) {
                 _fetchState.value = FetchLyricsState.Error("Error ${e.code()}: ${e.response()?.errorBody()?.string() ?: e.message()}")
@@ -154,8 +136,6 @@ fun EditSongScreen(
     var bpmText by remember { mutableStateOf(song.bpm?.toString() ?: "") }
     var timeSignature by remember { mutableStateOf(song.timeSignature ?: "") }
     var lyrics by remember { mutableStateOf(song.lyrics ?: "") }
-    var selectedSource by remember { mutableStateOf("LRCLIB") }
-
     val state by editSongViewModel.state.collectAsState()
     val fetchState by editSongViewModel.fetchState.collectAsState()
     val isLoading = state is EditSongState.Loading
@@ -291,34 +271,9 @@ fun EditSongScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // API source selector card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = XoundNavy)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Consultar letra y acordes",
-                    fontSize = 13.sp,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    EditSourceChip("LRCLIB", selectedSource == "LRCLIB") { selectedSource = "LRCLIB" }
-                    EditSourceChip("CIFRACLUB", selectedSource == "CIFRACLUB") { selectedSource = "CIFRACLUB" }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
         // Fetch button
         Button(
-            onClick = { editSongViewModel.fetchLyrics(artist, title, selectedSource) },
+            onClick = { editSongViewModel.fetchLyrics(artist, title) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(46.dp),

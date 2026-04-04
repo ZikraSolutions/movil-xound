@@ -40,6 +40,13 @@ class MainActivity : ComponentActivity() {
                     else -> "home"
                 }
                 var currentScreen by remember { mutableStateOf(initialScreen) }
+
+                // Auto-logout cuando el token expira o es inválido (401/403)
+                LaunchedEffect(Unit) {
+                    RetrofitClient.unauthorizedEvent.collect {
+                        currentScreen = "login"
+                    }
+                }
                 var songToEdit by remember { mutableStateOf<SongResponse?>(null) }
                 var songToView by remember { mutableStateOf<SongResponse?>(null) }
                 var selectedEvent by remember { mutableStateOf<EventResponse?>(null) }
