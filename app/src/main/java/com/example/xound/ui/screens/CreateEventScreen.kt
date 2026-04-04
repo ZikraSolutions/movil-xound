@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun CreateEventScreen(
     onBack: () -> Unit = {},
+    onPublished: () -> Unit = {},
     eventViewModel: EventViewModel = viewModel()
 ) {
     val colors = LocalXoundColors.current
@@ -189,28 +190,7 @@ fun CreateEventScreen(
         // Publish button (visible after creation)
         if (isSuccess) {
             val createdEvent = (createState as CreateEventState.Success).event
-
-            OutlinedButton(
-                onClick = { eventViewModel.publishEvent(createdEvent.id) },
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                shape = RoundedCornerShape(12.dp),
-                border = ButtonDefaults.outlinedButtonBorder
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Upload,
-                    contentDescription = null,
-                    tint = XoundNavy,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Publicar",
-                    color = XoundNavy,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            var publishing by remember { mutableStateOf(false) }
 
             // Success message
             Row(
@@ -232,6 +212,72 @@ fun CreateEventScreen(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            // Publish button
+            Button(
+                onClick = {
+                    publishing = true
+                    eventViewModel.publishEvent(createdEvent.id)
+                },
+                enabled = !publishing,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = XoundYellow),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                if (publishing) {
+                    CircularProgressIndicator(
+                        color = XoundNavy,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(22.dp)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Upload,
+                        contentDescription = null,
+                        tint = XoundNavy,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Publicar evento",
+                        color = XoundNavy,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Go to events button
+            OutlinedButton(
+                onClick = {
+                    eventViewModel.resetCreateState()
+                    onBack()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    text = "Ir a mis eventos",
+                    color = colors.textPrimary,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Navigate after publish
+            LaunchedEffect(createState) {
+                if (createState is CreateEventState.Idle && publishing) {
+                    onPublished()
+                }
+            }
         }
 
         // Error message

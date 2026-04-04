@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.ImeAction
 @Composable
 fun BandScreen(
     onBack: () -> Unit = {},
+    onLeftBand: () -> Unit = {},
     bandViewModel: BandViewModel = viewModel()
 ) {
     val colors = LocalXoundColors.current
@@ -48,6 +49,16 @@ fun BandScreen(
     var bandName by remember { mutableStateOf("") }
     val error by bandViewModel.error.collectAsState()
     val focusManager = LocalFocusManager.current
+    var showLeaveDialog by remember { mutableStateOf(false) }
+    val leftBand by bandViewModel.leftBand.collectAsState()
+
+    // Navigate to role selection after leaving band
+    LaunchedEffect(leftBand) {
+        if (leftBand) {
+            bandViewModel.resetLeftBand()
+            onLeftBand()
+        }
+    }
 
     LaunchedEffect(Unit) {
         bandViewModel.fetchBand()
@@ -454,7 +465,68 @@ fun BandScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
+
+            // Leave band button (musician only)
+            if (!isAdmin) {
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = { showLeaveDialog = true },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF87171).copy(alpha = 0.15f),
+                        contentColor = Color(0xFFF87171)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ExitToApp,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Salir de la banda",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
         }
+    }
+
+    // Leave band confirmation dialog
+    if (showLeaveDialog) {
+        AlertDialog(
+            onDismissRequest = { showLeaveDialog = false },
+            title = {
+                Text(
+                    text = "Salir de la banda",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text("¿Estás seguro que quieres salir de ${band?.name ?: "la banda"}? Tendrás que volver a ingresar un código para unirte a otra.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLeaveDialog = false
+                        bandViewModel.leaveBand()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFF87171)
+                    )
+                ) {
+                    Text("Salir")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLeaveDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     // Reset copied after delay

@@ -52,7 +52,6 @@ fun RoleSelectionScreen(
 
     val currentRole = SessionManager.getRoleName().uppercase()
     val isAlreadyAdmin = currentRole == "ADMIN" || currentRole == "SUPER_ADMIN"
-
     var selectedRole by remember { mutableStateOf<String?>(null) }
     var code by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -182,17 +181,19 @@ fun RoleSelectionScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             if (selectedRole == null) {
-                // Option: Join a band
-                RoleCard(
-                    title = "Unirse a una Banda",
-                    description = "Ingresa el código que te dio el administrador de tu banda.",
-                    icon = Icons.Default.Groups,
-                    backgroundColor = XoundYellow,
-                    contentColor = XoundNavy,
-                    onClick = { selectedRole = "musician" }
-                )
+                // Option: Join a band (only for musicians)
+                if (!isAlreadyAdmin) {
+                    RoleCard(
+                        title = "Unirse a una Banda",
+                        description = "Ingresa el código que te dio el administrador de tu banda.",
+                        icon = Icons.Default.Groups,
+                        backgroundColor = XoundYellow,
+                        contentColor = XoundNavy,
+                        onClick = { selectedRole = "musician" }
+                    )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 // Option: Be admin
                 RoleCard(

@@ -8,6 +8,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.xound.data.local.SessionManager
+import com.example.xound.data.network.RetrofitClient
+import kotlinx.coroutines.launch
 import com.example.xound.data.model.EventResponse
 import com.example.xound.data.model.SongResponse
 import com.example.xound.ui.screens.*
@@ -30,9 +32,10 @@ class MainActivity : ComponentActivity() {
                 val eventViewModel: EventViewModel = viewModel()
                 val songViewModel: SongViewModel = viewModel()
                 val bandViewModel: BandViewModel = viewModel()
+                val scope = rememberCoroutineScope()
                 val initialScreen = when {
                     !SessionManager.isLoggedIn() -> "login"
-                    !SessionManager.hasSelectedMode() -> "roleSelection"
+                    !SessionManager.hasSelectedMode() -> "checkingBand"
                     SessionManager.isMusician() -> "musicianHome"
                     else -> "home"
                 }
@@ -92,10 +95,14 @@ class MainActivity : ComponentActivity() {
                     "login" -> LoginScreen(
                         onNavigateToRegister = { currentScreen = "register" },
                         onLoginSuccess = {
-                            currentScreen = if (SessionManager.hasSelectedMode()) {
-                                if (SessionManager.isMusician()) "musicianHome" else "home"
+                            val role = SessionManager.getRoleName().uppercase()
+                            if (role == "ADMIN" || role == "SUPER_ADMIN") {
+                                SessionManager.setUserMode("admin")
+                                currentScreen = "home"
+                            } else if (SessionManager.hasSelectedMode()) {
+                                currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
                             } else {
-                                "roleSelection"
+                                currentScreen = "checkingBand"
                             }
                         },
                         authViewModel = authViewModel
@@ -105,6 +112,22 @@ class MainActivity : ComponentActivity() {
                         onRegisterSuccess = { currentScreen = "roleSelection" },
                         authViewModel = authViewModel
                     )
+                    "checkingBand" -> {
+                        // Show nothing while checking band
+                        LaunchedEffect(Unit) {
+                            try {
+                                val band = RetrofitClient.apiService.getMyBandAsMember()
+                                if (band.id != null && band.band != "null") {
+                                    SessionManager.setUserMode("musician")
+                                    currentScreen = "musicianHome"
+                                } else {
+                                    currentScreen = "roleSelection"
+                                }
+                            } catch (_: Exception) {
+                                currentScreen = "roleSelection"
+                            }
+                        }
+                    }
                     "roleSelection" -> RoleSelectionScreen(
                         onSelectAdmin = { currentScreen = "home" },
                         onSelectMusician = { currentScreen = "musicianHome" },
@@ -123,10 +146,6 @@ class MainActivity : ComponentActivity() {
                         onNavigateToAddSong = { currentScreen = "addSong" },
                         onNavigateToLiveMode = { currentScreen = "selectEventLive" },
                         onNavigateToBand = { currentScreen = "band" },
-                        onChangeRole = {
-                            SessionManager.setUserMode("")
-                            currentScreen = "roleSelection"
-                        },
                         onEventClick = { event ->
                             selectedEvent = event
                             eventDetailOrigin = "home"
@@ -144,10 +163,6 @@ class MainActivity : ComponentActivity() {
                         onNavigateToLibrary = { currentScreen = "library" },
                         onNavigateToLiveMode = { currentScreen = "selectEventLive" },
                         onNavigateToBand = { currentScreen = "band" },
-                        onChangeRole = {
-                            SessionManager.setUserMode("")
-                            currentScreen = "roleSelection"
-                        },
                         onEventClick = { event ->
                             selectedEvent = event
                             eventDetailOrigin = "musicianHome"
@@ -176,10 +191,12 @@ class MainActivity : ComponentActivity() {
                             eventToEdit = event
                             currentScreen = "editEvent"
                         },
+                        isAdmin = !SessionManager.isMusician(),
                         eventViewModel = eventViewModel
                     )
                     "createEvent" -> CreateEventScreen(
                         onBack = { currentScreen = "events" },
+                        onPublished = { currentScreen = "events" },
                         eventViewModel = eventViewModel
                     )
                     "eventDetail" -> selectedEvent?.let { event ->
@@ -215,6 +232,7 @@ class MainActivity : ComponentActivity() {
                                 viewSongEventName = event.title
                                 currentScreen = "viewSong"
                             },
+                            isAdmin = !SessionManager.isMusician(),
                             eventViewModel = eventViewModel
                         )
                     }
@@ -231,6 +249,9 @@ class MainActivity : ComponentActivity() {
                     "band" -> BandScreen(
                         onBack = {
                             currentScreen = if (SessionManager.isMusician()) "musicianHome" else "home"
+                        },
+                        onLeftBand = {
+                            currentScreen = "roleSelection"
                         },
                         bandViewModel = bandViewModel
                     )

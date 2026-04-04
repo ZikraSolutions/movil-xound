@@ -158,7 +158,7 @@ fun AddSongScreen(
     var artist by remember { mutableStateOf("") }
     var tone by remember { mutableStateOf("") }
     var bpmText by remember { mutableStateOf("") }
-    var timeSignature by remember { mutableStateOf("") }
+    var timeSignature by remember { mutableStateOf("4/4") }
     var lyrics by remember { mutableStateOf("") }
     var selectedSource by remember { mutableStateOf("LRCLIB") }
 

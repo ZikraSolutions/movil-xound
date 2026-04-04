@@ -63,12 +63,12 @@ fun HomeScreen(
             .padding(horizontal = 20.dp)
             .padding(top = 48.dp, bottom = 24.dp)
     ) {
-        // Top bar: logout + change role + dark mode
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onLogout) {
+        // Top bar: logout + dark mode
+        Box(modifier = Modifier.fillMaxWidth()) {
+            IconButton(
+                onClick = onLogout,
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
                 Icon(
                     imageVector = Icons.Default.ExitToApp,
                     contentDescription = "Cerrar sesión",
@@ -76,16 +76,10 @@ fun HomeScreen(
                     modifier = Modifier.size(24.dp)
                 )
             }
-            IconButton(onClick = onChangeRole) {
-                Icon(
-                    imageVector = Icons.Default.SwapHoriz,
-                    contentDescription = "Cambiar modo",
-                    tint = if (isDark) Color.White else XoundNavy,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            IconButton(onClick = { ThemeState.toggleDarkMode(systemDark) }) {
+            IconButton(
+                onClick = { ThemeState.toggleDarkMode(systemDark) },
+                modifier = Modifier.align(Alignment.CenterEnd)
+            ) {
                 Icon(
                     imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
                     contentDescription = "Cambiar tema",

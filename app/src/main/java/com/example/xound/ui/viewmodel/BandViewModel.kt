@@ -96,6 +96,25 @@ class BandViewModel : ViewModel() {
         }
     }
 
+    private val _leftBand = MutableStateFlow(false)
+    val leftBand: StateFlow<Boolean> = _leftBand.asStateFlow()
+
+    fun leaveBand() {
+        viewModelScope.launch {
+            try {
+                RetrofitClient.apiService.leaveBand()
+                SessionManager.setUserMode("")
+                _leftBand.value = true
+            } catch (e: Exception) {
+                _error.value = "Error al salir de la banda"
+            }
+        }
+    }
+
+    fun resetLeftBand() {
+        _leftBand.value = false
+    }
+
     fun regenerateCode() {
         viewModelScope.launch {
             try {

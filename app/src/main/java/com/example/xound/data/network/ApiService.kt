@@ -31,6 +31,10 @@ interface ApiService {
     @POST("api/bands/join")
     suspend fun joinBand(@Body body: Map<String, String>): Any
 
+    @POST("api/bands/leave")
+    suspend fun leaveBand(): Any
+
+
     @POST("api/bands")
     suspend fun createBand(@Body body: Map<String, String>): Any
 

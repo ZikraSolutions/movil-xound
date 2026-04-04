@@ -318,7 +318,8 @@ fun LibraryScreen(
                         onToggleFavorite = { songViewModel.toggleFavorite(song.id) },
                         onDelete = { songToDelete = song },
                         onEdit = { onEditSong(song) },
-                        onClick = { onViewSong(song) }
+                        onClick = { onViewSong(song) },
+                        swipeEnabled = showAddButton
                     )
                 }
 
@@ -350,7 +351,8 @@ private fun SwipeableSongCard(
     onToggleFavorite: () -> Unit,
     onDelete: () -> Unit,
     onEdit: () -> Unit,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    swipeEnabled: Boolean = true
 ) {
     var offsetX by remember { mutableFloatStateOf(0f) }
     var cardWidth by remember { mutableFloatStateOf(1f) }
@@ -407,7 +409,8 @@ private fun SwipeableSongCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                .pointerInput(Unit) {
+                .pointerInput(swipeEnabled) {
+                    if (!swipeEnabled) return@pointerInput
                     cardWidth = size.width.toFloat()
                     detectHorizontalDragGestures(
                         onDragStart = {

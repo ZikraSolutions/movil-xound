@@ -55,6 +55,7 @@ fun EventDetailScreen(
     onBack: () -> Unit = {},
     onAddSongToSetlist: () -> Unit = {},
     onViewSong: (SongResponse) -> Unit = {},
+    isAdmin: Boolean = true,
     eventViewModel: EventViewModel
 ) {
     val colors = LocalXoundColors.current
@@ -161,20 +162,22 @@ fun EventDetailScreen(
                     )
                 }
 
-                // Add song button
-                IconButton(
-                    onClick = onAddSongToSetlist,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .size(40.dp)
-                        .background(XoundYellow, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Agregar canción al setlist",
-                        tint = XoundNavy,
-                        modifier = Modifier.size(22.dp)
-                    )
+                // Add song button (admin only)
+                if (isAdmin) {
+                    IconButton(
+                        onClick = onAddSongToSetlist,
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .size(40.dp)
+                            .background(XoundYellow, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Agregar canción al setlist",
+                            tint = XoundNavy,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
 
@@ -210,47 +213,49 @@ fun EventDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Publicar + Compartir buttons
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(
-                    onClick = { eventViewModel.togglePublishFromDetail(event.id) },
-                    shape = RoundedCornerShape(20.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Upload,
-                        contentDescription = null,
-                        tint = XoundYellow,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (event.published) "Despublicar" else "Publicar",
-                        color = colors.textPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                if (event.shareCode != null) {
+            // Publicar + Compartir buttons (admin only)
+            if (isAdmin) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(
-                        onClick = { },
+                        onClick = { eventViewModel.togglePublishFromDetail(event.id) },
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Share,
+                            imageVector = Icons.Default.Upload,
                             contentDescription = null,
                             tint = XoundYellow,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Compartir",
+                            text = if (event.published) "Despublicar" else "Publicar",
                             color = colors.textPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium
                         )
+                    }
+
+                    if (event.shareCode != null) {
+                        OutlinedButton(
+                            onClick = { },
+                            shape = RoundedCornerShape(20.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = null,
+                                tint = XoundYellow,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Compartir",
+                                color = colors.textPrimary,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
@@ -281,7 +286,8 @@ fun EventDetailScreen(
                         setlistItem = setlistItem,
                         colorIndex = (setlistItem.songId % instrumentColors.size).toInt(),
                         onRemove = { songToRemove = setlistItem },
-                        onClick = { setlistItem.song?.let { onViewSong(it) } }
+                        onClick = { setlistItem.song?.let { onViewSong(it) } },
+                        swipeEnabled = isAdmin
                     )
                 }
 
@@ -309,7 +315,8 @@ private fun SwipeableSetlistCard(
     setlistItem: SetlistSongResponse,
     colorIndex: Int,
     onRemove: () -> Unit,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    swipeEnabled: Boolean = true
 ) {
     var offsetX by remember { mutableFloatStateOf(0f) }
     var cardWidth by remember { mutableFloatStateOf(1f) }
@@ -350,7 +357,8 @@ private fun SwipeableSetlistCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                .pointerInput(Unit) {
+                .pointerInput(swipeEnabled) {
+                    if (!swipeEnabled) return@pointerInput
                     cardWidth = size.width.toFloat()
                     detectHorizontalDragGestures(
                         onDragStart = {

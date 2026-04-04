@@ -42,6 +42,7 @@ fun EventsScreen(
     onCreateEvent: () -> Unit = {},
     onEventClick: (EventResponse) -> Unit = {},
     onEditEvent: (EventResponse) -> Unit = {},
+    isAdmin: Boolean = true,
     eventViewModel: EventViewModel = viewModel()
 ) {
     val colors = LocalXoundColors.current
@@ -173,7 +174,8 @@ fun EventsScreen(
                             eventItem = eventItem,
                             onClick = { onEventClick(eventItem.event) },
                             onDelete = { eventToDelete = eventItem.event },
-                            onEdit = { onEditEvent(eventItem.event) }
+                            onEdit = { onEditEvent(eventItem.event) },
+                            swipeEnabled = isAdmin
                         )
                     }
 
@@ -195,30 +197,32 @@ fun EventsScreen(
             }
         }
 
-        // Bottom button
-        Button(
-            onClick = onCreateEvent,
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 20.dp, vertical = 20.dp)
-                .height(52.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = XoundYellow),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null,
-                tint = XoundNavy,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Crear nuevo evento",
-                color = XoundNavy,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
+        // Bottom button (admin only)
+        if (isAdmin) {
+            Button(
+                onClick = onCreateEvent,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 20.dp, vertical = 20.dp)
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = XoundYellow),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    tint = XoundNavy,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Crear nuevo evento",
+                    color = XoundNavy,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+            }
         }
     }
 }
@@ -228,7 +232,8 @@ private fun SwipeableEventCard(
     eventItem: EventWithSetlistCount,
     onClick: () -> Unit,
     onDelete: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    swipeEnabled: Boolean = true
 ) {
     var offsetX by remember { mutableFloatStateOf(0f) }
     var cardWidth by remember { mutableFloatStateOf(1f) }
@@ -285,7 +290,8 @@ private fun SwipeableEventCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                .pointerInput(Unit) {
+                .pointerInput(swipeEnabled) {
+                    if (!swipeEnabled) return@pointerInput
                     cardWidth = size.width.toFloat()
                     detectHorizontalDragGestures(
                         onDragStart = {
