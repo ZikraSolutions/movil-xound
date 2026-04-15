@@ -7,6 +7,7 @@ import com.example.xound.data.model.BandResponse
 import com.example.xound.data.model.CreateEventRequest
 import com.example.xound.data.model.CreateSongRequest
 import com.example.xound.data.model.EventResponse
+import com.example.xound.data.model.LiveEvent
 import com.example.xound.data.model.LyricsResponse
 import com.example.xound.data.model.RegisterRequest
 import com.example.xound.data.model.SetlistSongResponse
@@ -123,4 +124,8 @@ interface ApiService {
 
     @GET("api/chords/fetch")
     suspend fun fetchChords(@Query("url") url: String): Map<String, String>
+
+    // Live session
+    @GET("api/live/{bandId}")
+    suspend fun getLiveSession(@Path("bandId") bandId: Long): LiveEvent
 }
