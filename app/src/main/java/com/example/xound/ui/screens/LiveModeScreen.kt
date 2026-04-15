@@ -20,8 +20,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.DisposableEffect
 import com.example.xound.data.model.EventResponse
 import com.example.xound.data.model.SongResponse
+import com.example.xound.data.network.LiveSyncManager
 import com.example.xound.ui.theme.LocalXoundColors
 import com.example.xound.ui.theme.XoundNavy
 import com.example.xound.ui.theme.XoundYellow
@@ -34,7 +36,9 @@ private val LiveChordColor = Color(0xFFE5A100)
 fun LiveModeScreen(
     event: EventResponse,
     onBack: () -> Unit = {},
-    eventViewModel: EventViewModel
+    eventViewModel: EventViewModel,
+    isAdmin: Boolean = false,
+    bandId: Long = -1L
 ) {
     val colors = LocalXoundColors.current
     val setlistSongs by eventViewModel.setlistSongs.collectAsState()
@@ -50,6 +54,52 @@ fun LiveModeScreen(
 
     LaunchedEffect(event.id) {
         eventViewModel.fetchSetlist(event.id)
+    }
+
+    // Declarar siempre fuera de cualquier if — regla de Compose
+    val remoteLiveEvent by LiveSyncManager.liveEvent.collectAsState()
+
+    // LIVE_START al entrar / LIVE_END al salir (solo ejecuta lógica si isAdmin)
+    DisposableEffect(Unit) {
+        if (isAdmin && bandId > 0) {
+            LiveSyncManager.sendStart(bandId, event.id)
+        }
+        onDispose {
+            if (isAdmin && bandId > 0) {
+                LiveSyncManager.sendEnd(bandId)
+            }
+        }
+    }
+
+    // Admin: enviar LIVE_STATE en cada cambio de canción/línea/play
+    LaunchedEffect(currentIndex, highlightLine, isPlaying) {
+        if (!isAdmin || bandId <= 0 || setlistSongs.isEmpty()) return@LaunchedEffect
+        LiveSyncManager.sendState(
+            bandId = bandId,
+            eventId = event.id,
+            songIndex = currentIndex,
+            lineIndex = highlightLine,
+            isPlaying = isPlaying
+        )
+    }
+
+    // Miembro: aplicar estado recibido del admin
+    LaunchedEffect(remoteLiveEvent) {
+        if (isAdmin) return@LaunchedEffect
+        val remoteEvent = remoteLiveEvent ?: return@LaunchedEffect
+        when (remoteEvent.type) {
+            "LIVE_STATE" -> {
+                if (remoteEvent.songIndex != currentIndex) {
+                    currentIndex = remoteEvent.songIndex
+                }
+                if (remoteEvent.lineIndex != highlightLine) {
+                    seekToLine = remoteEvent.lineIndex
+                }
+                if (remoteEvent.isPlaying != isPlaying) {
+                    isPlaying = remoteEvent.isPlaying
+                }
+            }
+        }
     }
 
     // Get current song
@@ -286,7 +336,7 @@ fun LiveModeScreen(
                     LiveLyricsWithChords(
                         text = lyricsText,
                         highlightLine = highlightLine,
-                        onLineClick = { lineIndex -> seekToLine = lineIndex }
+                        onLineClick = { lineIndex -> if (isAdmin) seekToLine = lineIndex }
                     )
                 } else {
                     Text(
@@ -386,7 +436,7 @@ fun LiveModeScreen(
                                     isPlaying = true
                                 }
                             },
-                            enabled = currentIndex > 0
+                            enabled = isAdmin && currentIndex > 0
                         ) {
                             Icon(
                                 imageVector = Icons.Default.SkipPrevious,
@@ -398,7 +448,7 @@ fun LiveModeScreen(
 
                         // Play/Pause
                         IconButton(
-                            onClick = { isPlaying = !isPlaying },
+                            onClick = { if (isAdmin) isPlaying = !isPlaying },
                             modifier = Modifier
                                 .size(56.dp)
                                 .background(XoundYellow, CircleShape)
@@ -421,7 +471,7 @@ fun LiveModeScreen(
                                     isPlaying = true
                                 }
                             },
-                            enabled = currentIndex < setlistSongs.size - 1
+                            enabled = isAdmin && currentIndex < setlistSongs.size - 1
                         ) {
                             Icon(
                                 imageVector = Icons.Default.SkipNext,
