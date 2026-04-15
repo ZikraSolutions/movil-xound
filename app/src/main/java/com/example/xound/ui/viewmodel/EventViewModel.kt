@@ -64,6 +64,25 @@ class EventViewModel : ViewModel() {
     private val _allSongs = MutableStateFlow<List<SongResponse>>(emptyList())
     val allSongs: StateFlow<List<SongResponse>> = _allSongs.asStateFlow()
 
+    // --- Band ID para LiveSync ---
+    private val _bandId = MutableStateFlow<Long?>(null)
+    val bandId: StateFlow<Long?> = _bandId.asStateFlow()
+
+    fun fetchBandId() {
+        viewModelScope.launch {
+            try {
+                val response = if (SessionManager.isMusician()) {
+                    RetrofitClient.apiService.getMyBandAsMember()
+                } else {
+                    RetrofitClient.apiService.getMyBand()
+                }
+                if (response.id != null && response.band != "null") {
+                    _bandId.value = response.id
+                }
+            } catch (_: Exception) { }
+        }
+    }
+
     fun fetchEvents() {
         viewModelScope.launch {
             _isLoading.value = true
