@@ -9,5 +9,6 @@ data class LiveEvent(
     @SerializedName("eventId") val eventId: Long? = null,
     @SerializedName("songIndex") val songIndex: Int = 0,
     @SerializedName("lineIndex") val lineIndex: Int = 0,
-    @SerializedName("isPlaying") val isPlaying: Boolean = true
+    @SerializedName("isPlaying") val isPlaying: Boolean = true,
+    @SerializedName("comment") val comment: String? = null
 )

@@ -2,6 +2,9 @@ package com.example.xound.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -47,8 +50,12 @@ fun LiveModeScreen(
     var currentIndex by remember { mutableIntStateOf(0) }
     var isPlaying by remember { mutableStateOf(true) }
     var highlightLine by remember { mutableIntStateOf(-1) }
-    // Track a seek trigger: when user taps a line, we set this to force the effect to restart from that line
     var seekToLine by remember { mutableIntStateOf(-1) }
+
+    // Comentarios en vivo
+    var showCommentDialog by remember { mutableStateOf(false) }
+    var commentInput by remember { mutableStateOf("") }
+    var visibleComment by remember { mutableStateOf<String?>(null) }
 
     val scrollState = rememberScrollState()
 
@@ -59,14 +66,19 @@ fun LiveModeScreen(
     // Declarar siempre fuera de cualquier if — regla de Compose
     val remoteLiveEvent by LiveSyncManager.liveEvent.collectAsState()
 
-    // LIVE_START al entrar / LIVE_END al salir (solo ejecuta lógica si isAdmin)
-    DisposableEffect(Unit) {
+    // LIVE_START: se envía cuando bandId esté disponible (no en Unit para evitar bandId=-1)
+    LaunchedEffect(bandId) {
         if (isAdmin && bandId > 0) {
             LiveSyncManager.sendStart(bandId, event.id)
         }
+    }
+
+    // LIVE_END al salir: captura el bandId actual en el momento del dispose
+    val latestBandId by rememberUpdatedState(bandId)
+    DisposableEffect(Unit) {
         onDispose {
-            if (isAdmin && bandId > 0) {
-                LiveSyncManager.sendEnd(bandId)
+            if (isAdmin && latestBandId > 0) {
+                LiveSyncManager.sendEnd(latestBandId)
             }
         }
     }
@@ -89,16 +101,20 @@ fun LiveModeScreen(
         val remoteEvent = remoteLiveEvent ?: return@LaunchedEffect
         when (remoteEvent.type) {
             "LIVE_STATE" -> {
-                if (remoteEvent.songIndex != currentIndex) {
-                    currentIndex = remoteEvent.songIndex
-                }
-                if (remoteEvent.lineIndex != highlightLine) {
-                    seekToLine = remoteEvent.lineIndex
-                }
-                if (remoteEvent.isPlaying != isPlaying) {
-                    isPlaying = remoteEvent.isPlaying
-                }
+                if (remoteEvent.songIndex != currentIndex) currentIndex = remoteEvent.songIndex
+                if (remoteEvent.lineIndex != highlightLine) seekToLine = remoteEvent.lineIndex
+                if (remoteEvent.isPlaying != isPlaying) isPlaying = remoteEvent.isPlaying
             }
+        }
+    }
+
+    // Mostrar comentario cuando llega (admin y músicos)
+    LaunchedEffect(remoteLiveEvent) {
+        val remoteEvent = remoteLiveEvent ?: return@LaunchedEffect
+        if (remoteEvent.type == "LIVE_COMMENT" && !remoteEvent.comment.isNullOrBlank()) {
+            visibleComment = remoteEvent.comment
+            delay(5000)
+            visibleComment = null
         }
     }
 
@@ -212,6 +228,44 @@ fun LiveModeScreen(
         highlightLine = -1
         seekToLine = -1
     }
+
+    // Diálogo para escribir comentario (solo admin)
+    if (showCommentDialog) {
+        AlertDialog(
+            onDismissRequest = { showCommentDialog = false; commentInput = "" },
+            title = { Text("Enviar comentario", fontWeight = FontWeight.Bold) },
+            text = {
+                OutlinedTextField(
+                    value = commentInput,
+                    onValueChange = { commentInput = it },
+                    placeholder = { Text("Escribe un comentario...") },
+                    singleLine = false,
+                    maxLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val text = commentInput.trim()
+                        if (text.isNotBlank() && bandId > 0) {
+                            LiveSyncManager.sendComment(bandId, event.id, text)
+                            visibleComment = text  // También visible para el propio admin
+                        }
+                        showCommentDialog = false
+                        commentInput = ""
+                    }
+                ) { Text("Enviar", color = XoundYellow, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCommentDialog = false; commentInput = "" }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
 
     Column(
         modifier = Modifier
@@ -480,6 +534,18 @@ fun LiveModeScreen(
                                 modifier = Modifier.size(36.dp)
                             )
                         }
+
+                        // Comentario (solo admin)
+                        if (isAdmin) {
+                            IconButton(onClick = { showCommentDialog = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.ChatBubbleOutline,
+                                    contentDescription = "Comentario",
+                                    tint = XoundYellow,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -487,6 +553,40 @@ fun LiveModeScreen(
             }
         }
     }
+
+    // Banner de comentario (superpuesto, visible para todos)
+    AnimatedVisibility(
+        visible = visibleComment != null,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = Modifier.align(Alignment.TopCenter)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 48.dp)
+                .background(XoundNavy.copy(alpha = 0.92f), RoundedCornerShape(12.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.ChatBubbleOutline,
+                    contentDescription = null,
+                    tint = XoundYellow,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = visibleComment ?: "",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+
+    } // end Box
 }
 
 @Composable

@@ -63,13 +63,17 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(globalLiveEvent) {
                     if (!SessionManager.isMusician()) return@LaunchedEffect
                     val ev = globalLiveEvent ?: return@LaunchedEffect
+                    android.util.Log.d("LiveSync", "globalLiveEvent → type=${ev.type} eventId=${ev.eventId}")
                     when (ev.type) {
                         "LIVE_START" -> {
-                            val targetEvent = eventViewModel.events.value.find { it.event.id == ev.eventId }
-                            if (targetEvent != null && currentScreen != "liveMode") {
-                                liveEvent = targetEvent.event
-                                currentScreen = "liveMode"
-                            }
+                            if (currentScreen == "liveMode") return@LaunchedEffect
+                            val eventId = ev.eventId ?: return@LaunchedEffect
+                            // Intentar usar datos completos si están en lista; si no, navegar con id mínimo
+                            val fullEvent = eventViewModel.events.value
+                                .find { it.event.id == eventId }?.event
+                                ?: EventResponse(id = eventId)
+                            liveEvent = fullEvent
+                            currentScreen = "liveMode"
                         }
                         "LIVE_END" -> {
                             if (currentScreen == "liveMode") {

@@ -4,9 +4,12 @@ package com.example.xound.data.network
 import com.example.xound.data.local.SessionManager
 import com.example.xound.data.model.LiveEvent
 import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -26,6 +29,8 @@ object LiveSyncManager {
     private var webSocket: WebSocket? = null
     private var currentBandId: Long = -1L
     private var connected = false
+    private var stompConnected = false
+    private var pendingStart: Pair<Long, Long>? = null  // (bandId, eventId)
 
     private val _liveEvent = MutableStateFlow<LiveEvent?>(null)
     val liveEvent: StateFlow<LiveEvent?> = _liveEvent.asStateFlow()
@@ -35,21 +40,37 @@ object LiveSyncManager {
         if (connected && currentBandId == bandId) return
         disconnect()
         currentBandId = bandId
-        val token = SessionManager.getToken() ?: return
+        stompConnected = false
+        val token = SessionManager.getToken() ?: run {
+            android.util.Log.e("LiveSync", "connect: no token, aborting")
+            return
+        }
+        android.util.Log.d("LiveSync", "connect: bandId=$bandId url=$WS_URL")
         val request = Request.Builder().url(WS_URL).build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
                 connected = true
+                stompConnected = false
+                android.util.Log.d("LiveSync", "onOpen: sending STOMP CONNECT")
                 ws.send("CONNECT\naccept-version:1.2\nheart-beat:0,0\nAuthorization:Bearer $token\n\n\u0000")
             }
 
             override fun onMessage(ws: WebSocket, text: String) {
                 val frame = parseFrame(text)
+                android.util.Log.d("LiveSync", "onMessage: command=${frame.command} body=${frame.body.take(120)}")
                 when (frame.command) {
                     "CONNECTED" -> {
+                        stompConnected = true
+                        android.util.Log.d("LiveSync", "STOMP connected, subscribing to /topic/band/$bandId/live")
                         ws.send("SUBSCRIBE\nid:sub-0\ndestination:/topic/band/$bandId/live\n\n\u0000")
+                        // Enviar LIVE_START pendiente si el admin lo solicitó antes del handshake
+                        pendingStart?.let { (bid, eid) ->
+                            android.util.Log.d("LiveSync", "sending pending LIVE_START bandId=$bid eventId=$eid")
+                            sendFrame("/app/band/$bid/live", """{"type":"LIVE_START","bandId":$bid,"eventId":$eid}""")
+                            pendingStart = null
+                        }
                         // Fetch current live state for late joiners (async, on IO dispatcher)
-                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                        CoroutineScope(Dispatchers.IO).launch {
                             runCatching {
                                 val existing = RetrofitClient.apiService.getLiveSession(bandId)
                                 if (existing != null) {
@@ -68,17 +89,28 @@ object LiveSyncManager {
             }
 
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
+                android.util.Log.e("LiveSync", "onFailure: ${t.message} response=${response?.code}")
                 connected = false
+                stompConnected = false
+                pendingStart = null
             }
 
             override fun onClosed(ws: WebSocket, code: Int, reason: String) {
+                android.util.Log.d("LiveSync", "onClosed: code=$code reason=$reason")
                 connected = false
+                stompConnected = false
             }
         })
     }
 
     /** Admin: enviar inicio de sesión en vivo */
     fun sendStart(bandId: Long, eventId: Long) {
+        if (!stompConnected) {
+            android.util.Log.d("LiveSync", "sendStart: not yet STOMP connected, queuing bandId=$bandId eventId=$eventId")
+            pendingStart = Pair(bandId, eventId)
+            return
+        }
+        android.util.Log.d("LiveSync", "sendStart: sending LIVE_START bandId=$bandId eventId=$eventId")
         sendFrame(
             destination = "/app/band/$bandId/live",
             body = """{"type":"LIVE_START","bandId":$bandId,"eventId":$eventId}"""
@@ -90,6 +122,15 @@ object LiveSyncManager {
         sendFrame(
             destination = "/app/band/$bandId/live",
             body = """{"type":"LIVE_STATE","bandId":$bandId,"eventId":$eventId,"songIndex":$songIndex,"lineIndex":$lineIndex,"isPlaying":$isPlaying}"""
+        )
+    }
+
+    /** Admin: enviar comentario visible para todos los músicos */
+    fun sendComment(bandId: Long, eventId: Long, comment: String) {
+        val escaped = comment.replace("\"", "\\\"")
+        sendFrame(
+            destination = "/app/band/$bandId/live",
+            body = """{"type":"LIVE_COMMENT","bandId":$bandId,"eventId":$eventId,"comment":"$escaped"}"""
         )
     }
 
@@ -112,6 +153,8 @@ object LiveSyncManager {
         webSocket?.close(1000, "Normal closure")
         webSocket = null
         connected = false
+        stompConnected = false
+        pendingStart = null
         currentBandId = -1L
     }
 
